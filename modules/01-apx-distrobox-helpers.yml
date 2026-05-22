@@ -1,0 +1,12 @@
+name: apx-distrobox-helpers
+type: shell
+commands:
+  - apt update
+  - apt install -y curl ca-certificates
+  - mkdir -p /usr/share/apx/distrobox
+  - curl -fsSL https://raw.githubusercontent.com/89luca89/distrobox/1.8.2.4/distrobox-export -o /usr/share/apx/distrobox/distrobox-export
+  - curl -fsSL https://raw.githubusercontent.com/89luca89/distrobox/1.8.2.4/distrobox-init -o /usr/share/apx/distrobox/distrobox-init
+  - curl -fsSL https://raw.githubusercontent.com/89luca89/distrobox/1.8.2.4/distrobox-host-exec -o /usr/share/apx/distrobox/distrobox-host-exec
+  - chmod +x /usr/share/apx/distrobox/distrobox-export
+  - chmod +x /usr/share/apx/distrobox/distrobox-init
+  - chmod +x /usr/share/apx/distrobox/distrobox-host-exec
