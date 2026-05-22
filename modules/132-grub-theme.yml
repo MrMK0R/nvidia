@@ -1,9 +1,0 @@
-name: grub-theme
-type: shell
-commands:
-  - apt update
-  - apt -y install git ca-certificates
-  - git clone --depth=1 https://github.com/vinceliuice/grub2-themes /tmp/grub2-themes
-  - bash /tmp/grub2-themes/install.sh -t tela -i color -s 1080p -g /usr/share/grub/themes
-  - mkdir -p /etc/default/grub.d
-  - 'printf "%s\n" "GRUB_TIMEOUT_STYLE=menu" "GRUB_TIMEOUT=5" "GRUB_TERMINAL_OUTPUT=gfxterm" "GRUB_GFXMODE=1920x1080,auto" "GRUB_GFXPAYLOAD_LINUX=keep" "GRUB_THEME=\"/usr/share/grub/themes/tela/theme.txt\"" > /etc/default/grub.d/99-grub-theme.cfg'
