@@ -73,7 +73,7 @@ stages:
       - modules/15-gnome-essentials.yml
       - modules/16-latest-mutter.yml
       - modules/18-libs-extra.yml
-      - modules/19-nvidia-driver.yml
+      - modules/19-nvidia-drivers.yml
       - modules/21-gnome-control-center.yml
       - modules/35-nautilus-terminal-rightclick.yml
       - modules/40-gnome-appearance.yml
