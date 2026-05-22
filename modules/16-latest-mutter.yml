@@ -1,7 +1,7 @@
 name: latest-mutter
 type: shell
 commands:
-  - echo "deb http://deb.debian.org/debian unstable main contrib non-free non-free-firmware" > /etc/apt/sources.list.d/debian-unstable.list
-  - 'printf "%s\n" "Package: *" "Pin: release a=unstable" "Pin-Priority: 1" "" "Package: mutter mutter-common mutter-common-bin libmutter-* gir1.2-mutter-* gnome-shell gnome-shell-common gnome-shell-extension-prefs gsettings-desktop-schemas" "Pin: release a=unstable" "Pin-Priority: 990" > /etc/apt/preferences.d/90-mutter-unstable'
+  - echo "deb http://deb.debian.org/debian experimental main contrib non-free non-free-firmware" > /etc/apt/sources.list.d/debian-experimental.list
   - apt update
-  - apt -y -t unstable install mutter gnome-shell gnome-shell-common gnome-shell-extension-prefs
+  - apt-cache policy mutter gnome-shell gnome-shell-extensions
+  - apt-get -s -o Debug::pkgProblemResolver=yes -t experimental install mutter gnome-shell gnome-shell-extensions
