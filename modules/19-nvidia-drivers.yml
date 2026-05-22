@@ -1,59 +1,30 @@
-name: nvidia-driver-firstboot
+name: nvidia-official-driver
 type: shell
 commands:
-  - mkdir -p /usr/local/sbin /etc/systemd/system /etc/default/grub.d
+- apt-mark hold cuda-drivers nvidia-container-toolkit
 
-  - 'printf "%s\n" "GRUB_CMDLINE_LINUX_DEFAULT=\"quiet splash nvidia-drm.modeset=1\"" > /etc/default/grub.d/90-nvidia.cfg'
-
-  - |
-    cat > /usr/local/sbin/install-nvidia-firstboot <<'EOF'
-    #!/bin/sh
-    set -e
-
-    if command -v nvidia-smi >/dev/null 2>&1; then
-      systemctl disable nvidia-firstboot.service || true
-      exit 0
-    fi
-
-    apt update
-    apt -y install ca-certificates wget gnupg software-properties-common dkms
-
-    apt -y install linux-headers-$(uname -r) || apt -y install linux-headers-amd64
-
-    add-apt-repository -y contrib || true
-
-    wget -O /tmp/cuda-keyring.deb https://developer.download.nvidia.com/compute/cuda/repos/debian13/x86_64/cuda-keyring_1.1-1_all.deb
-    dpkg -i /tmp/cuda-keyring.deb
-
-    apt update
-    apt -V -y install nvidia-driver nvidia-kernel-open-dkms nvidia-settings nvidia-persistenced
-
-    update-initramfs -u -k all || true
-
-    systemctl disable nvidia-firstboot.service || true
-    reboot
-    EOF
-
-  - chmod +x /usr/local/sbin/install-nvidia-firstboot
-
-  - |
-    cat > /etc/systemd/system/nvidia-firstboot.service <<'EOF'
-    [Unit]
-    Description=Install NVIDIA driver on first boot
-    Wants=network-online.target
-    After=network-online.target
-    Before=display-manager.service gdm3.service
-    ConditionPathExists=!/var/lib/nvidia-firstboot.done
-
-    [Service]
-    Type=oneshot
-    ExecStart=/usr/local/sbin/install-nvidia-firstboot
-    ExecStartPost=/usr/bin/mkdir -p /var/lib
-    ExecStartPost=/usr/bin/touch /var/lib/nvidia-firstboot.done
-    RemainAfterExit=yes
-
-    [Install]
-    WantedBy=multi-user.target
-    EOF
-
-  - systemctl enable nvidia-firstboot.service
+modules:
+- name: install-nvidia
+  type: apt
+  sources:
+    - packages:
+      - cuda-drivers
+      - nvidia-container-toolkit
+  cleanup:
+    - /var/lib/dkms/mok.key
+  modules:
+    - name: nvidia-official-repo
+      type: shell
+      sources:
+        - type: file
+          url: https://developer.download.nvidia.com/compute/cuda/repos/debian12/x86_64/cuda-keyring_1.1-1_all.deb
+          checksum: e7f219eab6fe4819cdb5c15b98233dc3420302d9c00883219cd3d896857cf48d
+          only-arches: [amd64]
+        - type: file
+          url: https://developer.download.nvidia.com/compute/cuda/repos/debian12/sbsa/cuda-keyring_1.1-1_all.deb
+          checksum: bf2f53b1a19259501119f732bdef2699f8c80c69a18e6a78dad78d67d96766dc
+          only-arches: [arm64]
+      commands:
+        - dpkg -i /sources/nvidia-official-repo/cuda-keyring_1.1-1_all/nvidia-official-repo.deb
+        - sed -i 's/sha1.second_preimage_resistance.*/sha1.second_preimage_resistance = 2026-12-31/' /usr/share/apt/default-sequoia.config
+        - apt-get update
