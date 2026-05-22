@@ -2,11 +2,4 @@ name: fix-apx-config
 type: shell
 commands:
   - mkdir -p /usr/share/apx
-  - |
-    cat > /usr/share/apx/apx.json <<'EOF'
-    {
-      "apxPath": "/usr/share/apx",
-      "distroboxPath": "/usr/local/bin/distrobox",
-      "storageDriver": "btrfs"
-    }
-    EOF
+  - printf '{\n  "apxPath": "/usr/share/apx",\n  "distroboxPath": "/usr/local/bin/distrobox",\n  "storageDriver": "btrfs"\n}\n' > /usr/share/apx/apx.json
