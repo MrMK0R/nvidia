@@ -37,17 +37,6 @@ stages:
     - apt-mark hold snapd gnome-software-plugin-snap
     - apt -y install squashfs-tools minisign
 
-  - name: nvidia-latest-driver
-    type: shell
-    commands:
-      - apt update
-      - apt -y install ca-certificates wget gnupg software-properties-common linux-headers-amd64
-      - add-apt-repository -y contrib || true
-      - wget -O /tmp/cuda-keyring.deb https://developer.download.nvidia.com/compute/cuda/repos/debian13/x86_64/cuda-keyring_1.1-1_all.deb
-      - dpkg -i /tmp/cuda-keyring.deb
-      - apt update
-      - apt -V -y install nvidia-open nvidia-settings
-
   - name: vanilla-tools
     type: shell
     sources:
@@ -82,7 +71,9 @@ stages:
       - modules/03-fswarn.yml
       - modules/10-vanilla-abroot-rollback-notifier.yml
       - modules/15-gnome-essentials.yml
+      - modules/16-latest-mutter.yml
       - modules/18-libs-extra.yml
+      - modules/19-nvidia-driver.yml
       - modules/21-gnome-control-center.yml
       - modules/35-nautilus-terminal-rightclick.yml
       - modules/40-gnome-appearance.yml
