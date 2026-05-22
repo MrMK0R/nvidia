@@ -68,7 +68,7 @@ stages:
       - modules/00-vanilla-sideload.yml
       - modules/00-vanilla-updates-utility.yml
       - modules/00-vanilla-prime-utility.yml
-      - modules/01-apx-distrobox-helpers.yml
+      - modules/02-fix-apx-config.yml
       - modules/03-fswarn.yml
       - modules/10-vanilla-abroot-rollback-notifier.yml
       - modules/15-gnome-essentials.yml
@@ -93,6 +93,12 @@ stages:
       - modules/170-gnome-software-vso-plugin.yml
       - modules/997-misc-setup.yml
       - modules/999-cleanup.yml
+
+  - name: install-ratbagd
+    type: shell
+    commands:
+      - apt update
+      - apt install -y ratbagd
 
   - name: cleanup-and-sysconf-setup
     type: shell
