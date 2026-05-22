@@ -4,7 +4,7 @@ commands:
   - echo "deb http://deb.debian.org/debian forky main contrib non-free non-free-firmware" > /etc/apt/sources.list.d/debian-forky.list
   - 'printf "%s\n" "Package: *" "Pin: release n=forky" "Pin-Priority: 1" "" "Package: mutter mutter-common mutter-common-bin libmutter-17-0 gir1.2-mutter-17" "Pin: release n=forky" "Pin-Priority: 990" > /etc/apt/preferences.d/90-mutter-forky'
   - apt update
-  - apt -y -t forky install mutter mutter-common mutter-common-bin libmutter-17-0 gir1.2-mutter-17
+  - apt -y --no-install-recommends -t forky install mutter mutter-common mutter-common-bin libmutter-17-0 gir1.2-mutter-17
+  - apt-cache policy mutter
   - rm -f /etc/apt/sources.list.d/debian-forky.list /etc/apt/preferences.d/90-mutter-forky
   - apt update
-  - apt-cache policy mutter
