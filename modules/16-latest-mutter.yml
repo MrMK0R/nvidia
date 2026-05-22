@@ -1,7 +1,10 @@
 name: latest-mutter
 type: shell
 commands:
-  - echo "deb http://deb.debian.org/debian experimental main contrib non-free non-free-firmware" > /etc/apt/sources.list.d/debian-experimental.list
+  - echo "deb http://deb.debian.org/debian forky main contrib non-free non-free-firmware" > /etc/apt/sources.list.d/debian-forky.list
+  - 'printf "%s\n" "Package: *" "Pin: release n=forky" "Pin-Priority: 1" "" "Package: mutter mutter-common mutter-common-bin libmutter-17-0 gir1.2-mutter-17" "Pin: release n=forky" "Pin-Priority: 990" > /etc/apt/preferences.d/90-mutter-forky'
   - apt update
-  - apt-cache policy mutter gnome-shell gnome-shell-extensions
-  - apt-get -s -o Debug::pkgProblemResolver=yes -t experimental install mutter gnome-shell gnome-shell-extensions
+  - apt -y -t forky install mutter mutter-common mutter-common-bin libmutter-17-0 gir1.2-mutter-17
+  - rm -f /etc/apt/sources.list.d/debian-forky.list /etc/apt/preferences.d/90-mutter-forky
+  - apt update
+  - apt-cache policy mutter
