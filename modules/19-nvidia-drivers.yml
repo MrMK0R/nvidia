@@ -7,4 +7,4 @@ commands:
   - wget -O /tmp/cuda-keyring.deb https://developer.download.nvidia.com/compute/cuda/repos/debian13/x86_64/cuda-keyring_1.1-1_all.deb
   - dpkg -i /tmp/cuda-keyring.deb
   - apt update
-  - apt -V -y install nvidia-open nvidia-settings nvidia-sysd-units
+  - apt -V -y install nvidia-open nvidia-persistenced
