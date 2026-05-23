@@ -1,26 +1,11 @@
 name: fix-apx-distrobox
 type: shell
-source:
-  type: git
-  url: https://github.com/89luca89/distrobox.git
-  tag: 1.8.0
 commands:
-  - mkdir -p /usr/share/apx/distrobox /usr/local/bin
-  - >-
-    if [ -f /sources/fix-apx-distrobox/distrobox ]; then
-    cp -a /sources/fix-apx-distrobox/distrobox* /usr/share/apx/distrobox/;
-    elif [ -f /sources/fix-apx-distrobox/distrobox/distrobox ]; then
-    cp -a /sources/fix-apx-distrobox/distrobox/distrobox* /usr/share/apx/distrobox/;
-    elif [ -f /sources/fix-apx-distrobox/distrobox-1.8.0/distrobox ]; then
-    cp -a /sources/fix-apx-distrobox/distrobox-1.8.0/distrobox* /usr/share/apx/distrobox/;
-    else
-    echo "Could not find distrobox files. Source layout:";
-    find /sources/fix-apx-distrobox -maxdepth 3 -print;
-    exit 1;
-    fi
-  - test -f /usr/share/apx/distrobox/distrobox
-  - test -f /usr/share/apx/distrobox/distrobox-export
+  - mkdir -p /usr/share/apx/distrobox
+  - test -f /usr/local/bin/distrobox
+  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox
+  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-enter
+  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-export
+  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-create
+  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-list
   - chmod +x /usr/share/apx/distrobox/distrobox*
-  - ln -sf /usr/share/apx/distrobox/distrobox /usr/local/bin/distrobox
-  - ln -sf /usr/share/apx/distrobox/distrobox-enter /usr/local/bin/distrobox-enter
-  - ln -sf /usr/share/apx/distrobox/distrobox-export /usr/local/bin/distrobox-export

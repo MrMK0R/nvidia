@@ -1,4 +1,4 @@
-name: fix-apx-configs
+name: fix-apx-config
 type: shell
 commands:
   - mkdir -p /usr/share/apx
