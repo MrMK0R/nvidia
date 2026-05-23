@@ -1,0 +1,21 @@
+name: fix-apx-distrobox
+type: shell
+source:
+  type: tar
+  url: https://github.com/89luca89/distrobox/archive/refs/tags/1.8.0.tar.gz
+commands:
+  - |
+    set -eu
+
+    SRC="$(find /sources/fix-apx-distrobox -type f -name distrobox-export -exec dirname {} \; -quit)"
+    test -n "$SRC"
+
+    mkdir -p /usr/share/apx/distrobox
+    cp -a "$SRC"/. /usr/share/apx/distrobox/
+
+    chmod +x /usr/share/apx/distrobox/distrobox*
+
+    mkdir -p /usr/local/bin
+    ln -sf /usr/share/apx/distrobox/distrobox /usr/local/bin/distrobox
+    ln -sf /usr/share/apx/distrobox/distrobox-enter /usr/local/bin/distrobox-enter
+    ln -sf /usr/share/apx/distrobox/distrobox-export /usr/local/bin/distrobox-export

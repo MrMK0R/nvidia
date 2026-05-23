@@ -68,6 +68,8 @@ stages:
       - modules/00-vanilla-system-operator.yml
       - modules/00-vanilla-tour.yml
       - modules/00-vanilla-updates-utility.yml
+      - modules/00-fix-apx-distrobox.yml
+      - modules/01-fix-apx-config.yml
       - modules/03-fswarn.yml
       - modules/10-vanilla-abroot-rollback-notifier.yml
       - modules/15-gnome-essentials.yml
