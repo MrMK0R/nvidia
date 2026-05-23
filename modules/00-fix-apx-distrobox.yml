@@ -1,11 +1,12 @@
 name: fix-apx-distrobox
 type: shell
 source:
-  type: tar
-  url: https://github.com/89luca89/distrobox/archive/refs/tags/1.8.0.tar.gz
+  type: git
+  url: https://github.com/89luca89/distrobox.git
+  tag: 1.8.0
 commands:
   - mkdir -p /usr/share/apx/distrobox
-  - cp -a /sources/fix-apx-distrobox/distrobox-1.8.0/. /usr/share/apx/distrobox/
+  - cp -a /sources/fix-apx-distrobox/. /usr/share/apx/distrobox/
   - chmod +x /usr/share/apx/distrobox/distrobox*
   - mkdir -p /usr/local/bin
   - ln -sf /usr/share/apx/distrobox/distrobox /usr/local/bin/distrobox
