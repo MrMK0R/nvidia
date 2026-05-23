@@ -1,16 +1,16 @@
 name: fix-apx-distrobox
 type: shell
 commands:
+  - apt-get update
+  - apt-get install -y distrobox
   - mkdir -p /usr/share/apx/distrobox
-  - test -f /usr/local/bin/distrobox
-  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox
-  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-create
-  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-enter
-  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-export
-  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-host-exec
-  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-init
-  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-list
-  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-rm
-  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-stop
-  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-upgrade
-  - chmod +x /usr/share/apx/distrobox/distrobox*
+  - ln -sf /usr/bin/distrobox /usr/share/apx/distrobox/distrobox
+  - ln -sf /usr/bin/distrobox-create /usr/share/apx/distrobox/distrobox-create
+  - ln -sf /usr/bin/distrobox-enter /usr/share/apx/distrobox/distrobox-enter
+  - ln -sf /usr/bin/distrobox-export /usr/share/apx/distrobox/distrobox-export
+  - ln -sf /usr/bin/distrobox-host-exec /usr/share/apx/distrobox/distrobox-host-exec
+  - ln -sf /usr/bin/distrobox-init /usr/share/apx/distrobox/distrobox-init
+  - ln -sf /usr/bin/distrobox-list /usr/share/apx/distrobox/distrobox-list
+  - ln -sf /usr/bin/distrobox-rm /usr/share/apx/distrobox/distrobox-rm
+  - ln -sf /usr/bin/distrobox-stop /usr/share/apx/distrobox/distrobox-stop
+  - ln -sf /usr/bin/distrobox-upgrade /usr/share/apx/distrobox/distrobox-upgrade
