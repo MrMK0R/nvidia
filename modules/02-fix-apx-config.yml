@@ -1,5 +1,0 @@
-name: fix-apx-config
-type: shell
-commands:
-  - mkdir -p /usr/share/apx /etc/apx
-  - 'printf "%s\n" "{" "  \"apxPath\": \"/usr/share/apx\"," "  \"distroboxPath\": \"/usr/local/bin/distrobox\"," "  \"storageDriver\": \"overlay\"" "}" | tee /usr/share/apx/apx.json /etc/apx/apx.json >/dev/null'
