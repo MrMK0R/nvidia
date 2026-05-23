@@ -4,8 +4,13 @@ commands:
   - mkdir -p /usr/share/apx/distrobox
   - test -f /usr/local/bin/distrobox
   - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox
+  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-create
   - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-enter
   - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-export
-  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-create
+  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-host-exec
+  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-init
   - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-list
+  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-rm
+  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-stop
+  - cp -a /usr/local/bin/distrobox /usr/share/apx/distrobox/distrobox-upgrade
   - chmod +x /usr/share/apx/distrobox/distrobox*
