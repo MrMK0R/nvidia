@@ -1,5 +1,5 @@
-- name: vanilla-apx
-  type: includes
-  includes:
-    - gh:vanilla-os/core-image:main:modules/00-vanilla-apx.yml
-    - gh:vanilla-os/core-image:main:modules/00-vanilla-apx-stacks.yml
+name: vanilla-apx
+type: includes
+includes:
+  - gh:vanilla-os/core-image:main:modules/00-vanilla-apx.yml
+  - gh:vanilla-os/core-image:main:modules/00-vanilla-apx-stacks.yml
