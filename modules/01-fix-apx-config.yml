@@ -1,12 +1,12 @@
 name: fix-apx-config
 type: shell
 commands:
-  - |
-    mkdir -p /usr/share/apx
-    cat > /usr/share/apx/apx.json <<'EOF'
-    {
-      "apxPath": "/usr/share/apx",
-      "distroboxPath": "/usr/share/apx/distrobox/distrobox",
-      "storageDriver": "overlay"
-    }
-    EOF
+  - >-
+    mkdir -p /usr/share/apx;
+    printf '%s\n'
+    '{'
+    '  "apxPath": "/usr/share/apx",'
+    '  "distroboxPath": "/usr/share/apx/distrobox/distrobox",'
+    '  "storageDriver": "overlay"'
+    '}'
+    > /usr/share/apx/apx.json
