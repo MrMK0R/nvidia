@@ -1,8 +1,8 @@
 name: fix-apx-config
 type: shell
 commands:
+  - mkdir -p /usr/share/apx
   - >-
-    mkdir -p /usr/share/apx;
     printf '%s\n'
     '{'
     '  "apxPath": "/usr/share/apx",'
