@@ -1,0 +1,28 @@
+name: install-networkspy-latest
+type: shell
+commands:
+  - apt-get update
+  - apt-get install -y curl jq ca-certificates
+  - >-
+    bash -lc 'set -e;
+    RELEASE="/tmp/networkspy-release.json";
+    curl -fsSL "https://api.github.com/repos/muizidn/NetworkSpy/releases/latest" -o "$RELEASE";
+
+    URL="$(jq -r "[.assets[].browser_download_url | select(test(\"\\\\.deb$\"; \"i\"))][0] // empty" "$RELEASE")";
+
+    if [ -n "$URL" ]; then
+      echo "Installing NetworkSpy deb: $URL";
+      curl -LfsS "$URL" -o /tmp/networkspy.deb;
+      apt-get install -y /tmp/networkspy.deb;
+      exit 0;
+    fi;
+
+    URL="$(jq -r "[.assets[].browser_download_url | select(test(\"AppImage$\"; \"i\"))][0] // empty" "$RELEASE")";
+
+    test -n "$URL";
+
+    echo "Installing NetworkSpy AppImage: $URL";
+    mkdir -p /opt/networkspy /usr/local/bin;
+    curl -LfsS "$URL" -o /opt/networkspy/NetworkSpy.AppImage;
+    chmod +x /opt/networkspy/NetworkSpy.AppImage;
+    ln -sf /opt/networkspy/NetworkSpy.AppImage /usr/local/bin/networkspy'

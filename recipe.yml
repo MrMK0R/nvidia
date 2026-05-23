@@ -77,6 +77,7 @@ stages:
       - modules/18-libs-extra.yml
       - modules/19-nvidia-drivers.yml
       - modules/21-gnome-control-center.yml
+      - modules/30-install-networkspy.yml
       - modules/35-nautilus-terminal-rightclick.yml
       - modules/40-gnome-appearance.yml
       - modules/50-laptop-goodies.yml
