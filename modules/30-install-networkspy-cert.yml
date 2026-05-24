@@ -1,0 +1,8 @@
+name: install-networkspy-cert
+type: shell
+sources:
+  - type: local
+    path: network-spy-cert
+commands:
+  - install -Dm0644 /sources/network-spy-cert/network-spy.crt /usr/local/share/ca-certificates/network-spy.crt
+  - update-ca-certificates
