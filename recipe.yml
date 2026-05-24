@@ -55,6 +55,18 @@ stages:
     - chmod +x /usr/bin/lpkg
     - chmod +x /usr/bin/cur-gpu
 
+  - name: network-spy-cert-support
+    type: apt
+    sources:
+      - packages:
+        - ca-certificates
+        - libnss3-tools
+        
+  - name: trust-network-spy-system-ca
+    type: shell
+    commands:
+      - update-ca-certificates
+
   - name: packages-modules
     type: includes
     includes:
@@ -96,11 +108,12 @@ stages:
       - modules/997-misc-setup.yml
       - modules/999-cleanup.yml
 
-  - name: install-ratbagd
-    type: shell
-    commands:
-      - apt update
-      - apt install -y ratbagd
+  - name: install-ratbagd-openrgb
+    type: apt
+    sources:
+      - packages:
+          - ratbagd
+          - openrgb
 
   - name: cleanup-and-sysconf-setup
     type: shell

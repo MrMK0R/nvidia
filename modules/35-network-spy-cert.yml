@@ -1,5 +1,27 @@
 name: network-spy-cert
 type: shell
+sources:
+  - type: local
+    path: sources/network-spy-cert
 commands:
-  - chmod 0644 /usr/local/share/ca-certificates/network-spy.crt
-  - update-ca-certificates
+  - mkdir -p /usr/local/share/ca-certificates
+  - |
+    set -eu
+
+    CERT_SRC="/sources/network-spy-cert/network-spy.cer"
+
+    if [ ! -f "$CERT_SRC" ]; then
+      echo "ERROR: Network Spy certificate not found at $CERT_SRC"
+      ls -la /sources/network-spy-cert || true
+      exit 1
+    fi
+
+    # Convert DER .cer to PEM .crt if needed, otherwise copy as-is
+    if openssl x509 -in "$CERT_SRC" -noout >/dev/null 2>&1; then
+      cp "$CERT_SRC" /usr/local/share/ca-certificates/network-spy.crt
+    else
+      openssl x509 -inform DER -in "$CERT_SRC" -out /usr/local/share/ca-certificates/network-spy.crt
+    fi
+
+    chmod 0644 /usr/local/share/ca-certificates/network-spy.crt
+    update-ca-certificates
