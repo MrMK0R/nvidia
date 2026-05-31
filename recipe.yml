@@ -95,12 +95,13 @@ stages:
       - modules/997-misc-setup.yml
       - modules/999-cleanup.yml
 
-  - name: install-ratbagd-openrgb
+  - name: install-additionals
     type: apt
     sources:
       - packages:
           - ratbagd
           - openrgb
+          - playerctl
 
   - name: cleanup-and-sysconf-setup
     type: shell
