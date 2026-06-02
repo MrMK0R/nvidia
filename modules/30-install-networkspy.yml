@@ -8,3 +8,5 @@ commands:
   - test -s /tmp/networkspy.url
   - curl -LfsS "$(cat /tmp/networkspy.url)" -o /tmp/networkspy.deb
   - apt-get install -y /tmp/networkspy.deb
+  - dpkg -i /tmp/networkspy.deb
+  - apt-get install -f
