@@ -1,18 +1,10 @@
-modules:
-  - name: install-networkspy-latest
-    type: shell
-    commands:
-      - apt-get update
-      - apt-get install -y curl jq ca-certificates
-      - curl -fsSL https://api.github.com/repos/muizidn/NetworkSpy/releases/latest -o /tmp/networkspy-release.json
-      - jq -r '.assets[] | select(.name | test("_amd64\\.deb$")) | .browser_download_url' /tmp/networkspy-release.json | head -n1 > /tmp/networkspy.url
-      - test -s /tmp/networkspy.url
-      - curl -LfsS "$(cat /tmp/networkspy.url)" -o /tmp/networkspy.deb
-      - dpkg -i /tmp/networkspy.deb || apt-get install -y -f
-
-  - name: trust-networkspy-ca
-    type: shell
-    commands:
-      - test -f /usr/local/share/ca-certificates/network-spy.crt
-      - chmod 0644 /usr/local/share/ca-certificates/network-spy.crt
-      - update-ca-certificates
+name: install-networkspy-latest
+type: shell
+commands:
+  - apt-get update
+  - apt-get install -y curl jq ca-certificates
+  - curl -fsSL https://api.github.com/repos/muizidn/NetworkSpy/releases/latest -o /tmp/networkspy-release.json
+  - jq -r '.assets[] | select(.name | test("_amd64\\.deb$")) | .browser_download_url' /tmp/networkspy-release.json | head -n1 > /tmp/networkspy.url
+  - test -s /tmp/networkspy.url
+  - curl -LfsS "$(cat /tmp/networkspy.url)" -o /tmp/networkspy.deb
+  - dpkg -i /tmp/networkspy.deb || apt-get install -y -f
