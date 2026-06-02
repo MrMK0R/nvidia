@@ -7,6 +7,5 @@ commands:
   - jq -r '.assets[] | select(.name | test("_amd64\\.deb$")) | .browser_download_url' /tmp/networkspy-release.json | head -n1 > /tmp/networkspy.url
   - test -s /tmp/networkspy.url
   - curl -LfsS "$(cat /tmp/networkspy.url)" -o /tmp/networkspy.deb
-  - apt-get install -y /tmp/networkspy.deb
-  - dpkg -i /tmp/networkspy.deb
-  - apt-get install -f
+  - dpkg -i /tmp/networkspy.deb || apt-get install -y -f
+  - apt-get install -y -f
