@@ -1,10 +1,10 @@
-name: Vanilla Desktop
-id: desktop
+name: Vanilla GNOME
+id: gnome
 vibversion: 1.1.0
 
 stages:
 - id: build
-  base: ghcr.io/vanilla-os/core:dev
+  base: ghcr.io/vanilla-os/core:latest
   addincludes: true
   singlelayer: false
   labels:
@@ -64,12 +64,16 @@ stages:
       - modules/00-vanilla-first-setup.yml
       - modules/00-vanilla-gnome-default-settings.yml
       - modules/00-vanilla-prime-utility.yml
+<<<<<<< HEAD
       - modules/00-vanilla-sideload.yml
       - modules/00-vanilla-system-operator.yml
       - modules/00-vanilla-tour.yml
       - modules/00-vanilla-updates-utility.yml
       - modules/00-fix-apx-distrobox.yml
       - modules/01-fix-apx-config.yml
+=======
+      - modules/00-vanilla-migration.yml
+>>>>>>> upstream/dev
       - modules/03-fswarn.yml
       - modules/10-vanilla-abroot-rollback-notifier.yml
       - modules/15-gnome-essentials.yml
