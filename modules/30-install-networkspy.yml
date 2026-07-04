@@ -1,12 +1,16 @@
 name: install-networkspy-latest
 type: shell
 commands:
+  # Referencing this build argument invalidates the layer for each new commit.
+  - test -n "$NETWORKSPY_CACHE_BUST"
   - apt-get update
   - apt-get install -y curl jq ca-certificates
   - curl -fsSL https://api.github.com/repos/muizidn/NetworkSpy/releases/latest -o /tmp/networkspy-release.json
-  - jq -r '.tag_name' /tmp/networkspy-release.json > /tmp/networkspy.version
+  - jq -er '.tag_name | sub("^v"; "")' /tmp/networkspy-release.json > /tmp/networkspy.version
   - jq -r '.assets[] | select(.name | endswith("_amd64.deb")) | .browser_download_url' /tmp/networkspy-release.json | head -n1 > /tmp/networkspy.url
   - test -s /tmp/networkspy.url
   - curl -LfsS "$(cat /tmp/networkspy.url)" -o /tmp/networkspy.deb
-  - dpkg -i /tmp/networkspy.deb || apt-get install -y -f
-  - rm -f /tmp/networkspy-release.json /tmp/networkspy.url /tmp/networkspy.deb
+  - test "$(dpkg-deb -f /tmp/networkspy.deb Version)" = "$(cat /tmp/networkspy.version)"
+  - apt-get install -y /tmp/networkspy.deb
+  - test "$(dpkg-query -W -f='${Version}' network-spy)" = "$(cat /tmp/networkspy.version)"
+  - rm -f /tmp/networkspy-release.json /tmp/networkspy.version /tmp/networkspy.url /tmp/networkspy.deb

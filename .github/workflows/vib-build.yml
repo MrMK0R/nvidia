@@ -99,6 +99,8 @@ jobs:
         labels: ${{ steps.meta.outputs.labels }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+        build-args: |
+          NETWORKSPY_CACHE_BUST=${{ env.TIMESTAMP }}
         platforms: linux/${{ matrix.arch }}
         provenance: false
         outputs: type=image,push-by-digest=true,name-canonical=true,push=${{ github.event_name != 'pull_request' }},rewrite-timestamp=true

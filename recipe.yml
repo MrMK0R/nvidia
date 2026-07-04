@@ -11,6 +11,7 @@ stages:
     maintainer: Vanilla OS Contributors
   args:
     DEBIAN_FRONTEND: noninteractive
+    NETWORKSPY_CACHE_BUST: local
   runs:
     commands:
       - echo 'APT::Install-Recommends "1";' > /etc/apt/apt.conf.d/01norecommends
