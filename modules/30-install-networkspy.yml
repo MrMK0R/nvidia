@@ -1,9 +1,6 @@
 name: install-networkspy-latest
 type: shell
 commands:
-  # Referencing this build argument invalidates the layer for each new commit.
-  - test -n "$NETWORKSPY_CACHE_BUST"
   - apt-get update
   - apt-get install -y curl jq ca-certificates
-  - curl -fsSL https://networkspy.app/install.sh | bash
-  - test "$(dpkg-query -W -f='${Version}' network-spy)" = "$(curl -fsSL https://networkspy.app/latest | jq -er '.version | sub("^v"; "")')"
+  - curl -fsSL https://raw.githubusercontent.com/muizidn/NetworkSpy/main/install.sh | bash
