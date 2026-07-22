@@ -10,7 +10,7 @@ commands:
   - case "$ARCH" in amd64|arm64) ASSET_ARCH="$ARCH" ;; *) echo "Unsupported Network Spy architecture $ARCH"; exit 1 ;; esac
   - DEB="/tmp/network-spy_${VERSION_NUM}_${ASSET_ARCH}.deb"
   - URL="https://github.com/NetworkSpyHQ/NetworkSpy/releases/download/${VERSION}/Network.Spy_${VERSION_NUM}_${ASSET_ARCH}.deb"
-  - if dpkg-query -W network-spy >/dev/null 2>&1; then apt-get remove -y network-spy; fi
+  - if dpkg-query -W network-spy >/dev/null 2>&1; then apt-get purge -y network-spy; fi
   - curl -fL "$URL" -o "$DEB"
   - apt-get install -y "$DEB"
   - test "$(dpkg-query -W -f='${Version}' network-spy)" = "$VERSION_NUM"
