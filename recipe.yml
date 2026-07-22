@@ -103,6 +103,7 @@ stages:
           - ratbagd
           - openrgb
           - playerctl
+          - ffmpeg
 
   - name: cleanup-and-sysconf-setup
     type: shell
