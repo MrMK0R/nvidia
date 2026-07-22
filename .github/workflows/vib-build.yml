@@ -42,6 +42,13 @@ jobs:
     steps:
     - uses: actions/checkout@v7
 
+    - name: Free runner disk space
+      run: |
+        df -h
+        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+        sudo docker system prune -af || true
+        df -h
+
     - name: Change tag in recipe.
       if: ${{ github.ref_type != 'tag' }}
       run: |
@@ -89,6 +96,10 @@ jobs:
     - name: Get Git commit timestamps
       run: echo "TIMESTAMP=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
+    - name: Get NetworkSpy version
+      run: |
+        echo "NETWORKSPY_VERSION=$(curl -fsSL https://api.github.com/repos/NetworkSpyHQ/NetworkSpy/releases/latest | jq -r '.tag_name')" >> "$GITHUB_ENV"
+
     - name: Build and push by digest
       id: build
       uses: docker/build-push-action@v7
@@ -100,7 +111,7 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
         build-args: |
-          NETWORKSPY_CACHE_BUST=${{ env.TIMESTAMP }}
+          NETWORKSPY_CACHE_BUST=${{ env.NETWORKSPY_VERSION }}
         platforms: linux/${{ matrix.arch }}
         provenance: false
         outputs: type=image,push-by-digest=true,name-canonical=true,push=${{ github.event_name != 'pull_request' }},rewrite-timestamp=true
