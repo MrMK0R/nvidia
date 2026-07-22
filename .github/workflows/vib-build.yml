@@ -96,10 +96,6 @@ jobs:
     - name: Get Git commit timestamps
       run: echo "TIMESTAMP=$(git log -1 --pretty=%ct)" >> $GITHUB_ENV
 
-    - name: Get NetworkSpy version
-      run: |
-        echo "NETWORKSPY_VERSION=$(curl -fsSL https://api.github.com/repos/NetworkSpyHQ/NetworkSpy/releases/latest | jq -r '.tag_name')" >> "$GITHUB_ENV"
-
     - name: Build and push by digest
       id: build
       uses: docker/build-push-action@v7
