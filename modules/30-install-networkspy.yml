@@ -2,6 +2,41 @@ name: install-networkspy-latest
 type: shell
 commands:
   - apt-get update
-  - apt-get install -y ca-certificates curl
-  - curl -fsSL https://networkspy.app/install.sh | bash
+  - apt-get install -y ca-certificates curl jq
+  - |
+    set -eu
+
+    VERSION="$(curl -fsSL https://networkspy.app/latest | jq -r '.version // empty')"
+    if [ -z "$VERSION" ]; then
+      echo "Could not resolve latest Network Spy version"
+      exit 1
+    fi
+
+    VERSION_NUM="${VERSION#v}"
+    ARCH="$(dpkg --print-architecture)"
+    case "$ARCH" in
+      amd64|arm64) ASSET_ARCH="$ARCH" ;;
+      *)
+        echo "Unsupported Network Spy architecture: $ARCH"
+        exit 1
+        ;;
+    esac
+
+    DEB="/tmp/network-spy_${VERSION_NUM}_${ASSET_ARCH}.deb"
+    URL="https://github.com/NetworkSpyHQ/NetworkSpy/releases/download/${VERSION}/Network.Spy_${VERSION_NUM}_${ASSET_ARCH}.deb"
+
+    if dpkg-query -W network-spy >/dev/null 2>&1; then
+      apt-get remove -y network-spy
+    fi
+
+    curl -fL "$URL" -o "$DEB"
+    apt-get install -y "$DEB"
+
+    INSTALLED_VERSION="$(dpkg-query -W -f='${Version}' network-spy)"
+    if [ "$INSTALLED_VERSION" != "$VERSION_NUM" ]; then
+      echo "Network Spy package version mismatch: expected $VERSION_NUM, got $INSTALLED_VERSION"
+      exit 1
+    fi
+
+    rm -f "$DEB"
   - apt-get clean
