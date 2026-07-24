@@ -104,6 +104,8 @@ stages:
           - openrgb
           - playerctl
           - ffmpeg
+          - gamemode 
+          - gamemode-daemon
 
   - name: cleanup-and-sysconf-setup
     type: shell
