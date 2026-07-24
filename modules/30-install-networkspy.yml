@@ -1,70 +1,42 @@
 name: install-networkspy-latest
 type: shell
 commands:
-  - |
-      set -eu
-      export DEBIAN_FRONTEND=noninteractive
+  - echo "NetworkSpy cache key ${NETWORKSPY_CACHE_BUST:-local}"
 
-      echo "NetworkSpy cache key: ${NETWORKSPY_CACHE_BUST:-local}"
+  - apt-get update
 
-      apt-get update
-      apt-get install -y --no-install-recommends \
-        ca-certificates \
-        curl \
-        jq
+  - apt-get install -y --no-install-recommends ca-certificates curl jq
 
-      ARCH="$(dpkg --print-architecture)"
+  - ARCH="$(dpkg --print-architecture)"
 
-      case "$ARCH" in
-        amd64|arm64) ;;
-        *)
-          echo "Unsupported architecture: $ARCH" >&2
-          exit 1
-          ;;
-      esac
+  - case "$ARCH" in amd64|arm64) ;; *) echo "Unsupported architecture $ARCH"; exit 1 ;; esac
 
-      RELEASES="/tmp/networkspy-releases.json"
-      DEB="/tmp/networkspy.deb"
+  - curl -fL --retry 5 -H "Accept: application/vnd.github+json" "https://api.github.com/repos/NetworkSpyHQ/NetworkSpy/releases?per_page=30" -o /tmp/networkspy-releases.json
 
-      curl -fL --retry 5 \
-        -H "Accept: application/vnd.github+json" \
-        "https://api.github.com/repos/NetworkSpyHQ/NetworkSpy/releases?per_page=30" \
-        -o "$RELEASES"
+  - >-
+      URL="$(jq -er --arg suffix "_${ARCH}.deb"
+      '[.[] | select(.draft == false) | . as $release |
+      .assets[]? | select(.name | endswith($suffix)) |
+      {url: .browser_download_url, published: $release.published_at}]
+      | sort_by(.published) | reverse | .[0].url'
+      /tmp/networkspy-releases.json)"
 
-      URL="$(
-        jq -er --arg suffix "_${ARCH}.deb" '
-          [
-            .[]
-            | select(.draft == false)
-            | . as $release
-            | .assets[]?
-            | select(.name | endswith($suffix))
-            | {
-                url: .browser_download_url,
-                published: $release.published_at
-              }
-          ]
-          | sort_by(.published)
-          | reverse
-          | .[0].url
-        ' "$RELEASES"
-      )"
+  - echo "Downloading $URL"
 
-      echo "Downloading: $URL"
+  - curl -fL --retry 5 "$URL" -o /tmp/networkspy.deb
 
-      curl -fL --retry 5 "$URL" -o "$DEB"
+  - PACKAGE="$(dpkg-deb -f /tmp/networkspy.deb Package)"
 
-      PACKAGE="$(dpkg-deb -f "$DEB" Package)"
-      VERSION="$(dpkg-deb -f "$DEB" Version)"
+  - VERSION="$(dpkg-deb -f /tmp/networkspy.deb Version)"
 
-      echo "Installing $PACKAGE version $VERSION"
+  - echo "Installing $PACKAGE version $VERSION"
 
-      apt-get install -y --allow-downgrades "$DEB"
+  - apt-get install -y --allow-downgrades /tmp/networkspy.deb
 
-      INSTALLED_VERSION="$(dpkg-query -W -f='${Version}' "$PACKAGE")"
+  - INSTALLED_VERSION="$(dpkg-query -W -f='${Version}' "$PACKAGE")"
 
-      test "$INSTALLED_VERSION" = "$VERSION"
+  - test "$INSTALLED_VERSION" = "$VERSION"
 
-      echo "Installed $PACKAGE $INSTALLED_VERSION"
+  - echo "Installed $PACKAGE $INSTALLED_VERSION"
 
-      rm -f "$DEB" "$RELEASES"
+  - rm -f /tmp/networkspy.deb /tmp/networkspy-releases.json
