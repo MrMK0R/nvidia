@@ -11,15 +11,21 @@ commands:
 
   - case "$ARCH" in amd64|arm64) ;; *) echo "Unsupported architecture $ARCH"; exit 1 ;; esac
 
-  - curl -fL --retry 5 -H "Accept: application/vnd.github+json" "https://api.github.com/repos/NetworkSpyHQ/NetworkSpy/releases?per_page=30" -o /tmp/networkspy-releases.json
+  - >-
+      curl -fL --retry 5
+      "https://api.github.com/repos/NetworkSpyHQ/NetworkSpy/releases?per_page=30"
+      -o /tmp/networkspy-releases.json
 
   - >-
       URL="$(jq -er --arg suffix "_${ARCH}.deb"
-      '[.[] | select(.draft == false) | . as $release |
-      .assets[]? | select(.name | endswith($suffix)) |
-      {url: .browser_download_url, published: $release.published_at}]
-      | sort_by(.published) | reverse | .[0].url'
+      '[.[] | select(.draft == false) | .assets[]?
+      | select(.name | endswith($suffix))]
+      | sort_by(.created_at)
+      | last
+      | .browser_download_url'
       /tmp/networkspy-releases.json)"
+
+  - test -n "$URL"
 
   - echo "Downloading $URL"
 
