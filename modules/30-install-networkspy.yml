@@ -1,18 +1,70 @@
 name: install-networkspy-latest
 type: shell
 commands:
-  - apt-get update
-  - apt-get install -y ca-certificates curl jq
-  - VERSION="$(curl -fsSL https://networkspy.app/latest | jq -r '.version // empty')"
-  - test -n "$VERSION"
-  - VERSION_NUM="${VERSION#v}"
-  - ARCH="$(dpkg --print-architecture)"
-  - case "$ARCH" in amd64|arm64) ASSET_ARCH="$ARCH" ;; *) echo "Unsupported Network Spy architecture $ARCH"; exit 1 ;; esac
-  - DEB="/tmp/network-spy_${VERSION_NUM}_${ASSET_ARCH}.deb"
-  - URL="https://github.com/NetworkSpyHQ/NetworkSpy/releases/download/${VERSION}/Network.Spy_${VERSION_NUM}_${ASSET_ARCH}.deb"
-  - if dpkg-query -W network-spy >/dev/null 2>&1; then apt-get purge -y network-spy; fi
-  - curl -fL "$URL" -o "$DEB"
-  - apt-get install -y "$DEB"
-  - test "$(dpkg-query -W -f='${Version}' network-spy)" = "$VERSION_NUM"
-  - rm -f "$DEB"
-  - apt-get clean
+  - |
+      set -eu
+      export DEBIAN_FRONTEND=noninteractive
+
+      echo "NetworkSpy cache key: ${NETWORKSPY_CACHE_BUST:-local}"
+
+      apt-get update
+      apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        jq
+
+      ARCH="$(dpkg --print-architecture)"
+
+      case "$ARCH" in
+        amd64|arm64) ;;
+        *)
+          echo "Unsupported architecture: $ARCH" >&2
+          exit 1
+          ;;
+      esac
+
+      RELEASES="/tmp/networkspy-releases.json"
+      DEB="/tmp/networkspy.deb"
+
+      curl -fL --retry 5 \
+        -H "Accept: application/vnd.github+json" \
+        "https://api.github.com/repos/NetworkSpyHQ/NetworkSpy/releases?per_page=30" \
+        -o "$RELEASES"
+
+      URL="$(
+        jq -er --arg suffix "_${ARCH}.deb" '
+          [
+            .[]
+            | select(.draft == false)
+            | . as $release
+            | .assets[]?
+            | select(.name | endswith($suffix))
+            | {
+                url: .browser_download_url,
+                published: $release.published_at
+              }
+          ]
+          | sort_by(.published)
+          | reverse
+          | .[0].url
+        ' "$RELEASES"
+      )"
+
+      echo "Downloading: $URL"
+
+      curl -fL --retry 5 "$URL" -o "$DEB"
+
+      PACKAGE="$(dpkg-deb -f "$DEB" Package)"
+      VERSION="$(dpkg-deb -f "$DEB" Version)"
+
+      echo "Installing $PACKAGE version $VERSION"
+
+      apt-get install -y --allow-downgrades "$DEB"
+
+      INSTALLED_VERSION="$(dpkg-query -W -f='${Version}' "$PACKAGE")"
+
+      test "$INSTALLED_VERSION" = "$VERSION"
+
+      echo "Installed $PACKAGE $INSTALLED_VERSION"
+
+      rm -f "$DEB" "$RELEASES"
