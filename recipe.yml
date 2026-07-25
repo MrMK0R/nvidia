@@ -106,6 +106,7 @@ stages:
           - ffmpeg
           - gamemode 
           - gamemode-daemon
+          - firmware-mediatek
 
   - name: cleanup-and-sysconf-setup
     type: shell
