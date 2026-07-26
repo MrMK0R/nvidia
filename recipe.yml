@@ -107,6 +107,8 @@ stages:
           - gamemode 
           - gamemode-daemon
           - firmware-mediatek
+          - xdg-utils
+          - flatpak-xdg-utils
 
   - name: cleanup-and-sysconf-setup
     type: shell
