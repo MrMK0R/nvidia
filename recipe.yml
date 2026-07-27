@@ -109,6 +109,7 @@ stages:
           - firmware-mediatek
           - xdg-utils
           - flatpak-xdg-utils
+          - lm-sensors
 
   - name: cleanup-and-sysconf-setup
     type: shell
