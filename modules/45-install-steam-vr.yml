@@ -1,0 +1,25 @@
+name: install-steam-vr
+type: shell
+commands:
+  # Steam and SteamVR currently require amd64 with 32-bit libraries.
+  - test "$(dpkg --print-architecture)" = "amd64"
+
+  # Enable 32-bit package support.
+  - dpkg --add-architecture i386
+  - apt-get update
+
+  # Accept the Debian Steam launcher licence during the image build.
+  - echo 'steam steam/question select I AGREE' | debconf-set-selections
+  - echo 'steam steam/license note' | debconf-set-selections
+
+  # Install native Steam, HTC Vive permissions and diagnostic tools.
+  - |
+    apt-get install -y \
+      steam-installer \
+      steam-devices \
+      nvidia-driver-libs:i386 \
+      nvidia-vulkan-icd:i386 \
+      wayland-utils \
+      vulkan-tools
+
+  - apt-get clean
