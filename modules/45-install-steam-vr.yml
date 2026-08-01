@@ -5,8 +5,9 @@ commands:
   - 'test "$(dpkg --print-architecture)" = "amd64"'
   - dpkg --add-architecture i386
   - apt-get update
-  - 'echo "steam steam/question select I AGREE" | debconf-set-selections'
-  - 'echo "steam steam/license note" | debconf-set-selections'
-  - 'NVIDIA_VERSION="$(dpkg-query -W -f=''${Version}'' nvidia-driver-libs)" && DEBIAN_FRONTEND=noninteractive apt-get install -y steam-installer steam-devices "nvidia-driver-libs:i386=${NVIDIA_VERSION}" "nvidia-vulkan-icd:i386=${NVIDIA_VERSION}" wayland-utils vulkan-tools'
+  - DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl wayland-utils vulkan-tools
+  - curl -fsSL https://repo.steampowered.com/steam/steam.gpg -o /usr/share/keyrings/steam.gpg
+  - 'printf "%s\n" "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/steam.gpg] https://repo.steampowered.com/steam/ stable steam" > /etc/apt/sources.list.d/steam-stable.list'
+  - apt-get update
+  - DEBIAN_FRONTEND=noninteractive apt-get install -y steam-launcher
   - apt-get clean
-  - rm -rf /var/lib/apt/lists/*
