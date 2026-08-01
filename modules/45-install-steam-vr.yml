@@ -1,18 +1,25 @@
 name: install-steam-vr
 type: shell
-
 commands:
-  - test "$(dpkg --print-architecture)" = "amd64"
+  - |
+    set -eux
 
-  # Enable Steam's required 32-bit libraries.
-  - dpkg --add-architecture i386
-  - apt-get update
+    test "$(dpkg --print-architecture)" = "amd64"
 
-  # Accept the Steam package licence.
-  - echo 'steam steam/question select I AGREE' | debconf-set-selections
-  - echo 'steam steam/license note' | debconf-set-selections
+    dpkg --add-architecture i386
+    apt-get update
 
-  # Install native Steam, Vive rules and VR diagnostic tools.
-  - apt-get install -y steam-installer steam-devices nvidia-driver-libs:i386 nvidia-vulkan-icd:i386 wayland-utils vulkan-tools
+    echo "steam steam/question select I AGREE" | debconf-set-selections
+    echo "steam steam/license note" | debconf-set-selections
 
-  - apt-get clean
+    NVIDIA_VERSION="$(dpkg-query -W -f='${Version}' nvidia-driver-libs)"
+
+    apt-get install -y \
+      steam-installer \
+      steam-devices \
+      "nvidia-driver-libs:i386=${NVIDIA_VERSION}" \
+      "nvidia-vulkan-icd:i386=${NVIDIA_VERSION}" \
+      wayland-utils \
+      vulkan-tools
+
+    apt-get clean
