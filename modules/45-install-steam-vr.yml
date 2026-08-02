@@ -4,20 +4,19 @@ type: shell
 commands:
   - 'test "$(dpkg --print-architecture)" = "amd64"'
   - apt-get -o Acquire::Retries=5 update
-  - DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=5 install -y --no-install-recommends wayland-utils vulkan-tools
+  - DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=5 install -y --no-install-recommends ca-certificates debian-archive-keyring wayland-utils vulkan-tools
   - mkdir -p /tmp/steam-apt-sources/list.d
-  - 'if [ -f /etc/apt/sources.list ]; then cp -a /etc/apt/sources.list /tmp/steam-apt-sources/sources.list; fi'
-  - 'for f in /etc/apt/sources.list.d/*; do [ -f "$f" ] || continue; cp -a "$f" "/tmp/steam-apt-sources/list.d/$(basename "$f")"; done'
-  - 'for f in /etc/apt/sources.list /etc/apt/sources.list.d/*; do [ -f "$f" ] || continue; grep -q "repo3\.vanillaos\.org" "$f" || continue; if grep -q "^Types:" "$f"; then if grep -q "^Architectures:" "$f"; then sed -i "s/^Architectures:.*/Architectures: amd64/" "$f"; else printf "\nArchitectures: amd64\n" >> "$f"; fi; else sed -i -E "/repo3\.vanillaos\.org/ { s#^deb \[#deb [arch=amd64,#; t; s#^deb #deb [arch=amd64] #; }" "$f"; fi; done'
+  - 'if [ -f /etc/apt/sources.list ] && grep -q "repo3\.vanillaos\.org" /etc/apt/sources.list; then mv /etc/apt/sources.list /tmp/steam-apt-sources/sources.list; fi'
+  - 'for f in /etc/apt/sources.list.d/*; do [ -f "$f" ] || continue; if grep -q "repo3\.vanillaos\.org" "$f"; then mv "$f" "/tmp/steam-apt-sources/list.d/$(basename "$f")"; fi; done'
   - dpkg --add-architecture i386
-  - 'find /var/lib/apt/lists -type f -name "*repo3.vanillaos.org*i386*" -delete'
-  - 'printf "%s\n" "Types: deb" "URIs: https://snapshot.debian.org/archive/debian/20260706T022345Z/" "Suites: forky" "Components: main contrib non-free non-free-firmware" "Architectures: i386" "Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg" "Check-Valid-Until: no" > /etc/apt/sources.list.d/debian-forky-i386-steam-rescue.sources'
-  - 'printf "%s\n" "Package: *:i386" "Pin: origin snapshot.debian.org" "Pin-Priority: 1001" "" "Package: *" "Pin: origin snapshot.debian.org" "Pin-Priority: 100" > /etc/apt/preferences.d/steam-i386-snapshot-rescue.pref'
+  - 'rm -f /var/lib/apt/lists/*repo3*vanillaos* /var/lib/apt/lists/partial/*repo3*vanillaos*'
+  - 'printf "%s\n" "Types: deb" "URIs: https://snapshot.debian.org/archive/debian/20260706T022345Z/" "Suites: sid" "Components: main contrib non-free non-free-firmware" "Architectures: amd64 i386" "Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg" "Check-Valid-Until: no" > /etc/apt/sources.list.d/debian-sid-steam-snapshot.sources'
+  - 'printf "%s\n" "Package: *:i386 steam-installer steam-libs steam-libs-i386 steam-devices" "Pin: release n=sid" "Pin-Priority: 1001" "" "Package: *" "Pin: release n=sid" "Pin-Priority: 100" > /etc/apt/preferences.d/steam-sid-snapshot.pref'
   - apt-get -o Acquire::Retries=5 -o Acquire::Check-Valid-Until=false update
   - 'printf "%s\n" "steam steam/question select I AGREE" "steam steam/license note" | debconf-set-selections'
-  - DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=5 install -y steam-installer steam-devices nvidia-driver-libs:i386
-  - rm -f /etc/apt/sources.list.d/debian-forky-i386-steam-rescue.sources /etc/apt/preferences.d/steam-i386-snapshot-rescue.pref
-  - 'if [ -f /tmp/steam-apt-sources/sources.list ]; then cp -a /tmp/steam-apt-sources/sources.list /etc/apt/sources.list; fi'
-  - 'for f in /tmp/steam-apt-sources/list.d/*; do [ -f "$f" ] || continue; cp -a "$f" "/etc/apt/sources.list.d/$(basename "$f")"; done'
+  - DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=5 --no-remove install -y steam-installer steam-devices nvidia-driver-libs:i386
+  - rm -f /etc/apt/sources.list.d/debian-sid-steam-snapshot.sources /etc/apt/preferences.d/steam-sid-snapshot.pref
+  - 'if [ -f /tmp/steam-apt-sources/sources.list ]; then mv /tmp/steam-apt-sources/sources.list /etc/apt/sources.list; fi'
+  - 'for f in /tmp/steam-apt-sources/list.d/*; do [ -f "$f" ] || continue; mv "$f" "/etc/apt/sources.list.d/$(basename "$f")"; done'
   - apt-get -o Acquire::Retries=5 update
   - apt-get clean
