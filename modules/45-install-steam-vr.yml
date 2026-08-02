@@ -3,9 +3,16 @@ type: shell
 
 commands:
   - 'test "$(dpkg --print-architecture)" = "amd64"'
+  - mkdir -p /tmp/steam-apt-sources/list.d
+  - 'if [ -f /etc/apt/sources.list ] && grep -q "repo3\.vanillaos\.org" /etc/apt/sources.list; then mv /etc/apt/sources.list /tmp/steam-apt-sources/sources.list; fi'
+  - 'for f in /etc/apt/sources.list.d/*; do if [ -f "$f" ] && grep -q "repo3\.vanillaos\.org" "$f"; then mv "$f" /tmp/steam-apt-sources/list.d/; fi; done'
+  - 'printf "%s\n" "Types: deb" "URIs: https://snapshot.debian.org/archive/debian/20260706T022345Z/" "Suites: forky" "Components: main contrib non-free non-free-firmware" "Architectures: amd64 i386" "Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg" "Check-Valid-Until: no" > /etc/apt/sources.list.d/debian-forky-steam-snapshot.sources'
   - dpkg --add-architecture i386
-  - apt-get -o Acquire::Retries=5 update
-  - 'apt-cache show steam-installer >/dev/null 2>&1 || { . /etc/os-release; test -n "${VERSION_CODENAME:-}"; printf "Types: deb\nURIs: http://deb.debian.org/debian\nSuites: %s\nComponents: contrib\nSigned-By: /usr/share/keyrings/debian-archive-keyring.gpg\n" "$VERSION_CODENAME" > /etc/apt/sources.list.d/steam-contrib.sources; apt-get -o Acquire::Retries=5 update; }'
+  - apt-get -o Acquire::Retries=5 -o Acquire::Check-Valid-Until=false update
   - 'printf "%s\n" "steam steam/question select I AGREE" "steam steam/license note" | debconf-set-selections'
-  - DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=5 install -y steam-installer steam-devices wayland-utils vulkan-tools
+  - DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=5 install -y steam-installer steam-devices nvidia-driver-libs:i386 wayland-utils vulkan-tools
+  - rm -f /etc/apt/sources.list.d/debian-forky-steam-snapshot.sources
+  - 'if [ -f /tmp/steam-apt-sources/sources.list ]; then mv /tmp/steam-apt-sources/sources.list /etc/apt/sources.list; fi'
+  - 'for f in /tmp/steam-apt-sources/list.d/*; do if [ -f "$f" ]; then mv "$f" /etc/apt/sources.list.d/; fi; done'
+  - apt-get -o Acquire::Retries=5 update
   - apt-get clean
