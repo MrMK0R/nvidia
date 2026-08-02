@@ -5,12 +5,19 @@ commands:
   - 'test "$(dpkg --print-architecture)" = "amd64"'
   - apt-get -o Acquire::Retries=5 update
   - DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=5 install -y --no-install-recommends wayland-utils vulkan-tools
+  - mkdir -p /tmp/steam-apt-sources/list.d
+  - 'if [ -f /etc/apt/sources.list ]; then cp -a /etc/apt/sources.list /tmp/steam-apt-sources/sources.list; fi'
+  - 'for f in /etc/apt/sources.list.d/*; do [ -f "$f" ] || continue; cp -a "$f" "/tmp/steam-apt-sources/list.d/$(basename "$f")"; done'
+  - 'for f in /etc/apt/sources.list /etc/apt/sources.list.d/*; do [ -f "$f" ] || continue; grep -q "repo3\.vanillaos\.org" "$f" || continue; if grep -q "^Types:" "$f"; then if grep -q "^Architectures:" "$f"; then sed -i "s/^Architectures:.*/Architectures: amd64/" "$f"; else printf "\nArchitectures: amd64\n" >> "$f"; fi; else sed -i -E "/repo3\.vanillaos\.org/ { s#^deb \[#deb [arch=amd64,#; t; s#^deb #deb [arch=amd64] #; }" "$f"; fi; done'
   - dpkg --add-architecture i386
+  - 'find /var/lib/apt/lists -type f -name "*repo3.vanillaos.org*i386*" -delete'
   - 'printf "%s\n" "Types: deb" "URIs: https://snapshot.debian.org/archive/debian/20260706T022345Z/" "Suites: forky" "Components: main contrib non-free non-free-firmware" "Architectures: i386" "Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg" "Check-Valid-Until: no" > /etc/apt/sources.list.d/debian-forky-i386-steam-rescue.sources'
-  - 'printf "%s\n" "Package: libxkbcommon-x11-0:i386 libxkbcommon0:i386 mesa-vulkan-drivers:i386 libegl1:i386 libglvnd0:i386 libgl1:i386 libgles1:i386 libgles2:i386 libglx0:i386 libopengl0:i386 libvulkan1:i386" "Pin: origin snapshot.debian.org" "Pin-Priority: 1001" "" "Package: *" "Pin: origin snapshot.debian.org" "Pin-Priority: 100" > /etc/apt/preferences.d/steam-i386-snapshot-rescue.pref'
+  - 'printf "%s\n" "Package: *:i386" "Pin: origin snapshot.debian.org" "Pin-Priority: 1001" "" "Package: *" "Pin: origin snapshot.debian.org" "Pin-Priority: 100" > /etc/apt/preferences.d/steam-i386-snapshot-rescue.pref'
   - apt-get -o Acquire::Retries=5 -o Acquire::Check-Valid-Until=false update
   - 'printf "%s\n" "steam steam/question select I AGREE" "steam steam/license note" | debconf-set-selections'
   - DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=5 install -y steam-installer steam-devices nvidia-driver-libs:i386
   - rm -f /etc/apt/sources.list.d/debian-forky-i386-steam-rescue.sources /etc/apt/preferences.d/steam-i386-snapshot-rescue.pref
+  - 'if [ -f /tmp/steam-apt-sources/sources.list ]; then cp -a /tmp/steam-apt-sources/sources.list /etc/apt/sources.list; fi'
+  - 'for f in /tmp/steam-apt-sources/list.d/*; do [ -f "$f" ] || continue; cp -a "$f" "/etc/apt/sources.list.d/$(basename "$f")"; done'
   - apt-get -o Acquire::Retries=5 update
   - apt-get clean
