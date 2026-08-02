@@ -4,10 +4,8 @@ type: shell
 commands:
   - 'test "$(dpkg --print-architecture)" = "amd64"'
   - dpkg --add-architecture i386
-  - apt-get update
-  - DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl wayland-utils vulkan-tools
-  - curl -fsSL https://repo.steampowered.com/steam/steam.gpg -o /usr/share/keyrings/steam.gpg
-  - 'printf "%s\n" "deb [arch=amd64,i386 signed-by=/usr/share/keyrings/steam.gpg] https://repo.steampowered.com/steam/ stable steam" > /etc/apt/sources.list.d/steam-stable.list'
-  - apt-get update
-  - DEBIAN_FRONTEND=noninteractive apt-get install -y steam-launcher
+  - apt-get -o Acquire::Retries=5 update
+  - 'apt-cache show steam-installer >/dev/null 2>&1 || { . /etc/os-release; test -n "${VERSION_CODENAME:-}"; printf "Types: deb\nURIs: http://deb.debian.org/debian\nSuites: %s\nComponents: contrib\nSigned-By: /usr/share/keyrings/debian-archive-keyring.gpg\n" "$VERSION_CODENAME" > /etc/apt/sources.list.d/steam-contrib.sources; apt-get -o Acquire::Retries=5 update; }'
+  - 'printf "%s\n" "steam steam/question select I AGREE" "steam steam/license note" | debconf-set-selections'
+  - DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=5 install -y steam-installer steam-devices wayland-utils vulkan-tools
   - apt-get clean
