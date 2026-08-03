@@ -2,21 +2,14 @@ name: install-steam-vr
 type: shell
 
 commands:
-  - 'test "$(dpkg --print-architecture)" = "amd64"'
+  # Build-safe only:
+  # Do not enable i386 during the image build.
+  # Do not install Steam during the image build.
+  # Do not install nvidia-driver-libs:i386 during the image build.
+  # Those are the pieces causing APT exit 100 in Docker Buildx.
   - apt-get -o Acquire::Retries=5 update
-  - DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=5 install -y --no-install-recommends ca-certificates debian-archive-keyring wayland-utils vulkan-tools
-  - mkdir -p /tmp/steam-apt-sources/list.d
-  - 'if [ -f /etc/apt/sources.list ] && grep -q "repo3\.vanillaos\.org" /etc/apt/sources.list; then mv /etc/apt/sources.list /tmp/steam-apt-sources/sources.list; fi'
-  - 'for f in /etc/apt/sources.list.d/*; do [ -f "$f" ] || continue; if grep -q "repo3\.vanillaos\.org" "$f"; then mv "$f" "/tmp/steam-apt-sources/list.d/$(basename "$f")"; fi; done'
-  - dpkg --add-architecture i386
-  - 'rm -f /var/lib/apt/lists/*repo3*vanillaos* /var/lib/apt/lists/partial/*repo3*vanillaos*'
-  - 'printf "%s\n" "Types: deb" "URIs: https://snapshot.debian.org/archive/debian/20260706T022345Z/" "Suites: sid" "Components: main contrib non-free non-free-firmware" "Architectures: amd64 i386" "Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg" "Check-Valid-Until: no" > /etc/apt/sources.list.d/debian-sid-steam-snapshot.sources'
-  - 'printf "%s\n" "Package: *:i386 steam-installer steam-libs steam-libs-i386 steam-devices" "Pin: release n=sid" "Pin-Priority: 1001" "" "Package: *" "Pin: release n=sid" "Pin-Priority: 100" > /etc/apt/preferences.d/steam-sid-snapshot.pref'
-  - apt-get -o Acquire::Retries=5 -o Acquire::Check-Valid-Until=false update
-  - 'printf "%s\n" "steam steam/question select I AGREE" "steam steam/license note" | debconf-set-selections'
-  - DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=5 --no-remove install -y steam-installer steam-devices nvidia-driver-libs:i386
-  - rm -f /etc/apt/sources.list.d/debian-sid-steam-snapshot.sources /etc/apt/preferences.d/steam-sid-snapshot.pref
-  - 'if [ -f /tmp/steam-apt-sources/sources.list ]; then mv /tmp/steam-apt-sources/sources.list /etc/apt/sources.list; fi'
-  - 'for f in /tmp/steam-apt-sources/list.d/*; do [ -f "$f" ] || continue; mv "$f" "/etc/apt/sources.list.d/$(basename "$f")"; done'
-  - apt-get -o Acquire::Retries=5 update
+  - DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=5 install -y --no-install-recommends ca-certificates curl wayland-utils vulkan-tools
+  - 'DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=5 install -y --no-install-recommends steam-devices || true'
+  - 'printf "%s\n" "#!/usr/bin/env bash" "set -euo pipefail" "if [ \"\$(id -u)\" -ne 0 ]; then" "  echo \"Run with: pkexec install-steamvr-runtime\" >&2" "  exit 1" "fi" "install -d -m 0755 /usr/share/keyrings" "curl -fsSL https://repo.steampowered.com/steam/steam.gpg -o /usr/share/keyrings/steam.gpg" "printf \"%s\n\" \"deb [arch=amd64,i386 signed-by=/usr/share/keyrings/steam.gpg] https://repo.steampowered.com/steam/ stable steam\" > /etc/apt/sources.list.d/steam-stable.list" "dpkg --add-architecture i386" "apt-get -o Acquire::Retries=5 update" "DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=5 install -y steam-launcher steam-devices" > /usr/local/bin/install-steamvr-runtime'
+  - chmod 0755 /usr/local/bin/install-steamvr-runtime
   - apt-get clean
