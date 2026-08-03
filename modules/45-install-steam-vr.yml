@@ -2,14 +2,131 @@ name: install-steam-vr
 type: shell
 
 commands:
-  # Build-safe only:
-  # Do not enable i386 during the image build.
-  # Do not install Steam during the image build.
-  # Do not install nvidia-driver-libs:i386 during the image build.
-  # Those are the pieces causing APT exit 100 in Docker Buildx.
-  - apt-get -o Acquire::Retries=5 update
-  - DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=5 install -y --no-install-recommends ca-certificates curl wayland-utils vulkan-tools
-  - 'DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=5 install -y --no-install-recommends steam-devices || true'
-  - 'printf "%s\n" "#!/usr/bin/env bash" "set -euo pipefail" "if [ \"\$(id -u)\" -ne 0 ]; then" "  echo \"Run with: pkexec install-steamvr-runtime\" >&2" "  exit 1" "fi" "install -d -m 0755 /usr/share/keyrings" "curl -fsSL https://repo.steampowered.com/steam/steam.gpg -o /usr/share/keyrings/steam.gpg" "printf \"%s\n\" \"deb [arch=amd64,i386 signed-by=/usr/share/keyrings/steam.gpg] https://repo.steampowered.com/steam/ stable steam\" > /etc/apt/sources.list.d/steam-stable.list" "dpkg --add-architecture i386" "apt-get -o Acquire::Retries=5 update" "DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=5 install -y steam-launcher steam-devices" > /usr/local/bin/install-steamvr-runtime'
-  - chmod 0755 /usr/local/bin/install-steamvr-runtime
-  - apt-get clean
+  # Install only the package required for setcap/getcap.
+  - |
+    set -eu
+    export DEBIAN_FRONTEND=noninteractive
+
+    if ! command -v setcap >/dev/null 2>&1 || \
+       ! command -v getcap >/dev/null 2>&1; then
+      apt-get -o Acquire::Retries=5 update
+      apt-get -o Acquire::Retries=5 install -y --no-install-recommends \
+        libcap2-bin
+      apt-get clean
+    fi
+
+  # Valve SteamVR udev rules embedded directly.
+  - |
+    set -eu
+
+    install -d -m 0755 /usr/lib/udev/rules.d
+
+    cat > /usr/lib/udev/rules.d/60-steam-vr.rules <<'EOF'
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="114d", ATTRS{idProduct}=="8a12", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0bb4", ATTRS{idProduct}=="2c87", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0bb4", ATTRS{idProduct}=="0306", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0bb4", ATTRS{idProduct}=="0309", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0bb4", ATTRS{idProduct}=="030a", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0bb4", ATTRS{idProduct}=="030b", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0bb4", ATTRS{idProduct}=="030c", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0bb4", ATTRS{idProduct}=="030e", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="28de", ATTRS{idProduct}=="1043", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="28de", ATTRS{idProduct}=="1142", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="28de", ATTRS{idProduct}=="2000", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="28de", ATTRS{idProduct}=="2010", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="28de", ATTRS{idProduct}=="2011", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="28de", ATTRS{idProduct}=="2012", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="28de", ATTRS{idProduct}=="2021", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="28de", ATTRS{idProduct}=="2022", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="28de", ATTRS{idProduct}=="2050", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="28de", ATTRS{idProduct}=="2101", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="28de", ATTRS{idProduct}=="2102", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="28de", ATTRS{idProduct}=="2150", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="28de", ATTRS{idProduct}=="2300", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="28de", ATTRS{idProduct}=="2301", MODE="0660", TAG+="uaccess"
+    SUBSYSTEM=="tty", ATTRS{idVendor}=="28de", ATTRS{idProduct}=="2102", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="35bd", ATTRS{idProduct}=="0101", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="35bd", ATTRS{idProduct}=="0202", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="35bd", ATTRS{idProduct}=="0105", MODE="0660", TAG+="uaccess"
+    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="35bd", ATTRS{idProduct}=="4004", MODE="0660", TAG+="uaccess"
+    EOF
+
+    chmod 0644 /usr/lib/udev/rules.d/60-steam-vr.rules
+
+  # Host-side setup helper for Flatpak SteamVR.
+  - |
+    set -eu
+
+    cat > /usr/local/bin/setup-flatpak-steamvr <<'EOF'
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    if [[ $(id -u) -ne 0 ]]; then
+      echo "Run from the Vanilla OS host with:" >&2
+      echo "  pkexec setup-flatpak-steamvr" >&2
+      exit 1
+    fi
+
+    caller_uid="${PKEXEC_UID:-${SUDO_UID:-}}"
+
+    if [[ -z "$caller_uid" ]]; then
+      echo "Unable to determine the desktop user's UID." >&2
+      exit 1
+    fi
+
+    caller_home="$(getent passwd "$caller_uid" | cut -d: -f6)"
+
+    if [[ -z "$caller_home" || ! -d "$caller_home" ]]; then
+      echo "Unable to determine the desktop user's home directory." >&2
+      exit 1
+    fi
+
+    launcher="${1:-}"
+
+    if [[ -z "$launcher" ]]; then
+      candidates=(
+        "$caller_home/.var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common/SteamVR/bin/linux64/vrcompositor-launcher"
+        "$caller_home/.var/app/com.valvesoftware.Steam/data/Steam/steamapps/common/SteamVR/bin/linux64/vrcompositor-launcher"
+      )
+
+      for candidate in "${candidates[@]}"; do
+        if [[ -f "$candidate" ]]; then
+          launcher="$candidate"
+          break
+        fi
+      done
+    fi
+
+    if [[ -z "$launcher" || ! -f "$launcher" ]]; then
+      echo "SteamVR's vrcompositor-launcher was not found." >&2
+      echo "Install SteamVR first, or provide its full path:" >&2
+      echo "  pkexec setup-flatpak-steamvr /path/to/vrcompositor-launcher" >&2
+      exit 1
+    fi
+
+    launcher="$(readlink -f "$launcher")"
+
+    if [[ "$(basename "$launcher")" != "vrcompositor-launcher" ]] ||
+       [[ "$launcher" != */SteamVR/bin/linux64/vrcompositor-launcher ]]; then
+      echo "Refusing unexpected file: $launcher" >&2
+      exit 1
+    fi
+
+    setcap cap_sys_nice+ep "$launcher"
+
+    if ! getcap "$launcher" | grep -q "cap_sys_nice"; then
+      echo "The SteamVR capability could not be verified." >&2
+      exit 1
+    fi
+
+    if command -v udevadm >/dev/null 2>&1; then
+      udevadm control --reload-rules || true
+      udevadm trigger --subsystem-match=hidraw --action=change || true
+      udevadm trigger --subsystem-match=usb --action=change || true
+    fi
+
+    echo "SteamVR host setup completed:"
+    getcap "$launcher"
+    EOF
+
+    chmod 0755 /usr/local/bin/setup-flatpak-steamvr
