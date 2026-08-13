@@ -111,6 +111,14 @@ stages:
           - xdg-utils
           - flatpak-xdg-utils
           - lm-sensors
+          - pipewire
+          - pipewire-bin
+          - pipewire-alsa
+          - pipewire-pulse
+          - pipewire-jack
+          - wireplumber
+          - gstreamer1.0-pipewire
+          - libspa-0.2-bluetooth
 
   - name: cleanup-and-sysconf-setup
     type: shell
