@@ -119,6 +119,8 @@ stages:
           - wireplumber
           - gstreamer1.0-pipewire
           - libspa-0.2-bluetooth
+          - libnccl2
+          - libnccl-dev
 
   - name: cleanup-and-sysconf-setup
     type: shell
