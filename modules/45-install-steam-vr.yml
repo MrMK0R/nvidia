@@ -5,4 +5,4 @@ sources:
     url: https://cdn.fastly.steamstatic.com/client/installer/steam.deb
 commands:
   - apt-get update
-  - apt-get install -y /sources/steam.deb
+  - apt-get install -y /sources/install-steam/steam.deb
