@@ -12,4 +12,3 @@ sources:
     - libavcodec-extra
 
     - mesa-vulkan-drivers
-    - steam-devices
