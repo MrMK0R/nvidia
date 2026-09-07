@@ -1,10 +1,27 @@
 name: install-steam
 type: shell
+
 sources:
   - type: file
     url: https://cdn.fastly.steamstatic.com/client/installer/steam.deb
+
 commands:
+  # Steam requires 32-bit userspace libraries
+  - dpkg --add-architecture i386
+
   - apt-get update
+
+  # Install Steam's required 32-bit runtime libraries
+  - apt-get install -y steam-libs-i386:i386
+
+  # Install matching 32-bit NVIDIA OpenGL/Vulkan libraries
+  - apt-get install -y nvidia-driver-libs:i386 nvidia-vulkan-icd:i386
+
+  # Install Valve's Steam launcher
   - DEB="$(find /sources/install-steam -type f -name '*.deb' -print -quit)"
   - test -n "$DEB"
   - apt-get install -y "$DEB"
+
+  # Useful build diagnostics
+  - dpkg --print-foreign-architectures
+  - dpkg -l | grep -E 'steam|libc6:i386|nvidia.*i386' || true
