@@ -4,24 +4,11 @@ type: shell
 commands:
   - echo "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/20260820T000000Z/ forky main contrib non-free non-free-firmware" > /etc/apt/sources.list.d/debian-forky.list
 
-  - 'printf "%s\n" \
-    "Package: *" \
-    "Pin: release n=forky" \
-    "Pin-Priority: 1" \
-    "" \
-    "Package: mutter mutter-common mutter-common-bin libmutter-18-0 gir1.2-mutter-18" \
-    "Pin: release n=forky" \
-    "Pin-Priority: 990" \
-    > /etc/apt/preferences.d/90-mutter-forky'
+  - 'printf "%s\n" "Package: *" "Pin: release n=forky" "Pin-Priority: 1" "" "Package: mutter mutter-common mutter-common-bin libmutter-18-0 gir1.2-mutter-18" "Pin: release n=forky" "Pin-Priority: 990" > /etc/apt/preferences.d/90-mutter-forky'
 
   - apt-get update
 
-  - apt-get install -y --no-install-recommends \
-    mutter=50.3-1 \
-    mutter-common=50.3-1 \
-    mutter-common-bin=50.3-1 \
-    libmutter-18-0=50.3-1 \
-    gir1.2-mutter-18=50.3-1
+  - apt-get install -y --no-install-recommends mutter=50.3-1 mutter-common=50.3-1 mutter-common-bin=50.3-1 libmutter-18-0=50.3-1 gir1.2-mutter-18=50.3-1
 
   - apt-cache policy mutter libmutter-18-0 libc6 libc-bin
 
