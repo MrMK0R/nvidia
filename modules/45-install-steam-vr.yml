@@ -9,28 +9,27 @@ commands:
   # Enable 32-bit packages for Steam/Proton.
   - dpkg --add-architecture i386
 
-  # Vanilla's dated repo has a working i386 package index but its
-  # actual i386 .deb files return 404. Keep it amd64-only.
-  - grep -q '^Architectures:' /etc/apt/sources.list.d/vanilla-base.sources || echo 'Architectures: amd64' >> /etc/apt/sources.list.d/vanilla-base.sources
+  # Vanilla's dated repository is usable for amd64, but its i386
+  # package files return 404. Restrict Vanilla's repository to amd64.
+  - "grep -q '^Architectures:' /etc/apt/sources.list.d/vanilla-base.sources || echo 'Architectures: amd64' >> /etc/apt/sources.list.d/vanilla-base.sources"
 
-  # Use Debian's matching snapshot for i386 packages.
+  # Use Debian's matching July 6, 2026 snapshot for i386 packages.
   - 'printf "%s\n" "Types: deb" "URIs: https://snapshot.debian.org/archive/debian/20260706T022345Z/" "Suites: sid" "Components: main contrib non-free non-free-firmware" "Architectures: i386" "Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg" "Check-Valid-Until: no" > /etc/apt/sources.list.d/debian-i386.sources'
 
   - apt-get update
 
-  # Install Steam's required 32-bit libraries.
-  # --no-install-recommends is important because Debian steam-libs
-  # recommends steam-devices, which conflicts with Valve's launcher.
+  # Install the 32-bit Steam runtime.
+  # Do not install recommendations because steam-devices conflicts
+  # with Valve's steam-launcher package.
   - apt-get install -y --no-install-recommends steam-libs-i386:i386
 
-  # Install NVIDIA 32-bit graphics libraries using exactly the same
-  # version already installed for amd64.
+  # Install matching 32-bit NVIDIA OpenGL/Vulkan libraries.
   - NVIDIA_VER="$(dpkg-query -W -f='${Version}' nvidia-driver-libs:amd64)" && apt-get install -y --no-install-recommends "nvidia-driver-libs:i386=$NVIDIA_VER" "nvidia-vulkan-icd:i386=$NVIDIA_VER"
 
   # Install Valve's official Steam launcher.
   - DEB="$(find /sources/install-steam -type f -name '*.deb' -print -quit)" && test -n "$DEB" && apt-get install -y "$DEB"
 
-  # Verify the important 32-bit components really exist.
+  # Verify the important 32-bit components.
   - test -e /lib/i386-linux-gnu/libc.so.6
   - dpkg-query -W -f='${binary:Package} ${Version}\n' libc6:i386 steam-libs-i386:i386 nvidia-driver-libs:i386 nvidia-vulkan-icd:i386
 
