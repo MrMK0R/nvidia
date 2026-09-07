@@ -6,22 +6,33 @@ sources:
     url: https://cdn.fastly.steamstatic.com/client/installer/steam.deb
 
 commands:
-  # Steam requires 32-bit userspace libraries
+  # Enable 32-bit packages for Steam/Proton.
   - dpkg --add-architecture i386
+
+  # Vanilla's dated repo has a working i386 package index but its
+  # actual i386 .deb files return 404. Keep it amd64-only.
+  - grep -q '^Architectures:' /etc/apt/sources.list.d/vanilla-base.sources || echo 'Architectures: amd64' >> /etc/apt/sources.list.d/vanilla-base.sources
+
+  # Use Debian's matching snapshot for i386 packages.
+  - 'printf "%s\n" "Types: deb" "URIs: https://snapshot.debian.org/archive/debian/20260706T022345Z/" "Suites: sid" "Components: main contrib non-free non-free-firmware" "Architectures: i386" "Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg" "Check-Valid-Until: no" > /etc/apt/sources.list.d/debian-i386.sources'
 
   - apt-get update
 
-  # Install Steam's required 32-bit runtime libraries
-  - apt-get install -y steam-libs-i386:i386
+  # Install Steam's required 32-bit libraries.
+  # --no-install-recommends is important because Debian steam-libs
+  # recommends steam-devices, which conflicts with Valve's launcher.
+  - apt-get install -y --no-install-recommends steam-libs-i386:i386
 
-  # Install matching 32-bit NVIDIA OpenGL/Vulkan libraries
-  - apt-get install -y nvidia-driver-libs:i386 nvidia-vulkan-icd:i386
+  # Install NVIDIA 32-bit graphics libraries using exactly the same
+  # version already installed for amd64.
+  - NVIDIA_VER="$(dpkg-query -W -f='${Version}' nvidia-driver-libs:amd64)" && apt-get install -y --no-install-recommends "nvidia-driver-libs:i386=$NVIDIA_VER" "nvidia-vulkan-icd:i386=$NVIDIA_VER"
 
-  # Install Valve's Steam launcher
-  - DEB="$(find /sources/install-steam -type f -name '*.deb' -print -quit)"
-  - test -n "$DEB"
-  - apt-get install -y "$DEB"
+  # Install Valve's official Steam launcher.
+  - DEB="$(find /sources/install-steam -type f -name '*.deb' -print -quit)" && test -n "$DEB" && apt-get install -y "$DEB"
 
-  # Useful build diagnostics
+  # Verify the important 32-bit components really exist.
+  - test -e /lib/i386-linux-gnu/libc.so.6
+  - dpkg-query -W -f='${binary:Package} ${Version}\n' libc6:i386 steam-libs-i386:i386 nvidia-driver-libs:i386 nvidia-vulkan-icd:i386
+
+  # Confirm i386 is enabled.
   - dpkg --print-foreign-architectures
-  - dpkg -l | grep -E 'steam|libc6:i386|nvidia.*i386' || true
