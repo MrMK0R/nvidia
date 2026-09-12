@@ -121,6 +121,7 @@ stages:
           - libspa-0.2-bluetooth
           - libnccl2
           - libnccl-dev
+          - libfuse2t64
 
   - name: cleanup-and-sysconf-setup
     type: shell
