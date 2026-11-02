@@ -10,8 +10,8 @@ commands:
 
   - apt-get install -y --no-install-recommends mutter mutter-common mutter-common-bin libmutter-18-0 gir1.2-mutter-18
 
-  - 'installed="$(dpkg-query -W -f="${Version}" mutter)"; dpkg --compare-versions "$installed" ge 50.3 || { echo "ERROR: Installed Mutter is older than 50.3"; exit 1; }'
-
+  - 'installed="$(dpkg-query -W -f=''${Version}'' mutter)" && dpkg --compare-versions "$installed" ge 50.3 || { echo "ERROR: Could not verify installed Mutter >= 50.3 (installed: $installed)"; exit 1; }'
+  
   - apt-cache policy mutter libmutter-18-0 libc6 libc-bin
 
   - rm -f /etc/apt/sources.list.d/debian-forky.list
