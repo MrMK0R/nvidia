@@ -1,93 +1,107 @@
 name: latest-mutter
 type: shell
 
-sources:
-  - type: file
-    url: https://snapshot.debian.org/archive/debian/20260820T000000Z/
-
 commands:
-  # Add the pinned Debian Forky snapshot.
-  - |
-    printf '%s\n' \
-      'deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/20260820T000000Z/ forky main contrib non-free non-free-firmware' \
-      > /etc/apt/sources.list.d/debian-forky.list
-
-  # Retry APT when Debian Snapshot temporarily returns HTTP 503.
-  # Fail if any configured repository cannot be updated.
+  # Configure a temporary, pinned Debian Forky repository.
   - |
     set -eu
 
+    REPO_FILE="/etc/apt/sources.list.d/debian-forky-snapshot.list"
+
+    cleanup() {
+      rm -f "$REPO_FILE"
+    }
+
+    trap cleanup EXIT
+    trap 'exit 1' HUP INT TERM
+
+    printf '%s\n' \
+      'deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/20260820T000000Z/ forky main contrib non-free non-free-firmware' \
+      > "$REPO_FILE"
+
+    echo "Configured Debian Forky snapshot."
+
+    # Retry APT updates to handle temporary network failures.
+    update_success=0
+
     for attempt in 1 2 3 4 5; do
-      if apt-get -o APT::Update::Error-Mode=any update; then
-        echo "APT package indexes updated successfully."
+      if apt-get \
+        -o APT::Update::Error-Mode=any \
+        -o Acquire::Retries=3 \
+        update; then
+
+        update_success=1
+        echo "APT indexes updated successfully."
         break
       fi
 
-      if [ "$attempt" -eq 5 ]; then
-        echo "ERROR: APT update failed after 5 attempts."
-        exit 1
+      if [ "$attempt" -lt 5 ]; then
+        delay=$((attempt * 10))
+        echo "APT update failed. Retrying in ${delay} seconds..."
+        sleep "$delay"
       fi
-
-      delay=$((attempt * 10))
-      echo "APT update failed. Retrying in ${delay} seconds..."
-      sleep "$delay"
     done
 
-  # Confirm all required packages have candidates.
-  - |
-    set -eu
-
-    for package in mutter mutter-common mutter-common-bin libmutter-18-0 gir1.2-mutter-18; do
-      candidate="$(apt-cache policy "$package" | awk '/Candidate:/ {print $2}')"
-
-      if [ -z "$candidate" ] || [ "$candidate" = "(none)" ]; then
-        echo "ERROR: No installation candidate found for $package."
-        exit 1
-      fi
-
-      echo "$package candidate: $candidate"
-    done
-
-  # Require Mutter 50.3 or newer.
-  - |
-    set -eu
-
-    version="$(apt-cache policy mutter | awk '/Candidate:/ {print $2}')"
-
-    if ! dpkg --compare-versions "$version" ge 50.3; then
-      echo "ERROR: Mutter 50.3 or newer is required; candidate is $version"
+    if [ "$update_success" -ne 1 ]; then
+      echo "ERROR: APT update failed after 5 attempts."
       exit 1
     fi
 
-    echo "Verified Mutter candidate: $version"
-
-  # Install Mutter and its required packages.
-  - |
-    apt-get install -y --no-install-recommends \
-      mutter \
-      mutter-common \
-      mutter-common-bin \
-      libmutter-18-0 \
+    # Validate all required package candidates.
+    PACKAGES="
+      mutter
+      mutter-common
+      mutter-common-bin
+      libmutter-18-0
       gir1.2-mutter-18
+    "
 
-  # Verify the installed Mutter version.
-  - |
-    set -eu
+    set --
 
+    for package in $PACKAGES; do
+      version="$(apt-cache policy "$package" | awk '/Candidate:/ {print $2; exit}')"
+
+      if [ -z "$version" ] || [ "$version" = "(none)" ]; then
+        echo "ERROR: No installation candidate for $package."
+        exit 1
+      fi
+
+      # Require every Mutter component to be version 50.3 or newer.
+      if ! dpkg --compare-versions "$version" ge "50.3"; then
+        echo "ERROR: $package requires version 50.3 or newer."
+        echo "Available candidate: $version"
+        exit 1
+      fi
+
+      echo "$package candidate: $version"
+
+      # Preserve the validated version for installation.
+      set -- "$@" "$package=$version"
+    done
+
+    # Install the validated package versions.
+    DEBIAN_FRONTEND=noninteractive apt-get install \
+      -y \
+      --no-install-recommends \
+      "$@"
+
+    # Verify the installed Mutter version.
     installed="$(dpkg-query -W -f='${Version}' mutter)"
 
-    if ! dpkg --compare-versions "$installed" ge 50.3; then
-      echo "ERROR: Could not verify installed Mutter >= 50.3 (installed: $installed)"
+    if ! dpkg --compare-versions "$installed" ge "50.3"; then
+      echo "ERROR: Installed Mutter version is below 50.3."
+      echo "Installed version: $installed"
       exit 1
     fi
 
     echo "Successfully installed Mutter $installed"
 
-  # Display installed package versions for build diagnostics.
-  - apt-cache policy mutter libmutter-18-0 libc6 libc-bin
+    # Display package versions for GitHub Actions diagnostics.
+    apt-cache policy \
+      mutter \
+      libmutter-18-0 \
+      libc6 \
+      libc-bin
 
-  # Remove the temporary Debian Snapshot repository.
-  - rm -f /etc/apt/sources.list.d/debian-forky.list
-
-  # Refresh package indexes using the remaining repositories.
-  - apt-get -o APT::Update::Error-Mode=any update
+    echo "Mutter installation completed successfully."
+    echo "Temporary Debian repository will now be removed."
