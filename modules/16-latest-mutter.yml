@@ -1,19 +1,93 @@
 name: latest-mutter
 type: shell
 
+sources:
+  - type: file
+    url: https://snapshot.debian.org/archive/debian/20260820T000000Z/
+
 commands:
-  - echo "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/20260820T000000Z/ forky main contrib non-free non-free-firmware" > /etc/apt/sources.list.d/debian-forky.list
+  # Add the pinned Debian Forky snapshot.
+  - |
+    printf '%s\n' \
+      'deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/20260820T000000Z/ forky main contrib non-free non-free-firmware' \
+      > /etc/apt/sources.list.d/debian-forky.list
 
-  - apt-get update
+  # Retry APT when Debian Snapshot temporarily returns HTTP 503.
+  # Fail if any configured repository cannot be updated.
+  - |
+    set -eu
 
-  - 'version="$(apt-cache policy mutter | awk "/Candidate:/ {print \$2}")"; dpkg --compare-versions "$version" ge 50.3 || { echo "ERROR: Mutter 50.3 or newer is required; candidate is $version"; exit 1; }'
+    for attempt in 1 2 3 4 5; do
+      if apt-get -o APT::Update::Error-Mode=any update; then
+        echo "APT package indexes updated successfully."
+        break
+      fi
 
-  - apt-get install -y --no-install-recommends mutter mutter-common mutter-common-bin libmutter-18-0 gir1.2-mutter-18
+      if [ "$attempt" -eq 5 ]; then
+        echo "ERROR: APT update failed after 5 attempts."
+        exit 1
+      fi
 
-  - 'installed="$(dpkg-query -W -f=''${Version}'' mutter)" && dpkg --compare-versions "$installed" ge 50.3 || { echo "ERROR: Could not verify installed Mutter >= 50.3 (installed: $installed)"; exit 1; }'
-  
+      delay=$((attempt * 10))
+      echo "APT update failed. Retrying in ${delay} seconds..."
+      sleep "$delay"
+    done
+
+  # Confirm all required packages have candidates.
+  - |
+    set -eu
+
+    for package in mutter mutter-common mutter-common-bin libmutter-18-0 gir1.2-mutter-18; do
+      candidate="$(apt-cache policy "$package" | awk '/Candidate:/ {print $2}')"
+
+      if [ -z "$candidate" ] || [ "$candidate" = "(none)" ]; then
+        echo "ERROR: No installation candidate found for $package."
+        exit 1
+      fi
+
+      echo "$package candidate: $candidate"
+    done
+
+  # Require Mutter 50.3 or newer.
+  - |
+    set -eu
+
+    version="$(apt-cache policy mutter | awk '/Candidate:/ {print $2}')"
+
+    if ! dpkg --compare-versions "$version" ge 50.3; then
+      echo "ERROR: Mutter 50.3 or newer is required; candidate is $version"
+      exit 1
+    fi
+
+    echo "Verified Mutter candidate: $version"
+
+  # Install Mutter and its required packages.
+  - |
+    apt-get install -y --no-install-recommends \
+      mutter \
+      mutter-common \
+      mutter-common-bin \
+      libmutter-18-0 \
+      gir1.2-mutter-18
+
+  # Verify the installed Mutter version.
+  - |
+    set -eu
+
+    installed="$(dpkg-query -W -f='${Version}' mutter)"
+
+    if ! dpkg --compare-versions "$installed" ge 50.3; then
+      echo "ERROR: Could not verify installed Mutter >= 50.3 (installed: $installed)"
+      exit 1
+    fi
+
+    echo "Successfully installed Mutter $installed"
+
+  # Display installed package versions for build diagnostics.
   - apt-cache policy mutter libmutter-18-0 libc6 libc-bin
 
+  # Remove the temporary Debian Snapshot repository.
   - rm -f /etc/apt/sources.list.d/debian-forky.list
 
-  - apt-get update
+  # Refresh package indexes using the remaining repositories.
+  - apt-get -o APT::Update::Error-Mode=any update
