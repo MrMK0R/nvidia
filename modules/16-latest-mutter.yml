@@ -2,8 +2,6 @@ name: latest-mutter
 type: shell
 
 commands:
-  # VIB joins commands into a Dockerfile RUN instruction.
-  # Keep this script as one folded YAML command.
   - >-
     set -eu;
     REPO_FILE="/etc/apt/sources.list.d/debian-forky-snapshot.list";
@@ -51,4 +49,4 @@ commands:
     fi;
     echo "Successfully installed Mutter $installed";
     apt-cache policy mutter libmutter-18-0 libc6 libc-bin;
-    echo "Mutter installation completed successfully.";
+    echo "Mutter installation completed successfully."
