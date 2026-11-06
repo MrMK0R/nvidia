@@ -1,3 +1,4 @@
+---
 name: install-steam
 type: shell
 
@@ -6,44 +7,29 @@ sources:
     url: https://cdn.fastly.steamstatic.com/client/installer/steam.deb
 
 commands:
-  - dpkg --add-architecture i386
-
-  - test -s /etc/apt/sources.list.d/vanilla-base.sources
-  - sed -i '/^Architectures:/d; /^Types:/a Architectures: amd64' /etc/apt/sources.list.d/vanilla-base.sources
-
-  - 'printf "%s\n" "Types: deb" "URIs: https://deb.debian.org/debian/" "Suites: sid" "Components: main contrib non-free non-free-firmware" "Architectures: i386" "Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg" > /etc/apt/sources.list.d/debian-i386.sources'
-
-  - apt-get update
-
-  - >-
-    apt-cache policy
-    libc6:amd64 libc6:i386
-    nvidia-driver-libs:amd64 nvidia-driver-libs:i386
-    nvidia-vulkan-icd:amd64 nvidia-vulkan-icd:i386
-
-  - >-
-    apt-cache madison
-    nvidia-driver-libs:i386
-    nvidia-vulkan-icd:i386
-
-  - apt-get install -y --no-install-recommends steam-libs-i386:i386
-
-  - >-
-    NVIDIA_VER="$(dpkg-query -W -f='${Version}' nvidia-driver-libs:amd64)" &&
-    test -n "$NVIDIA_VER" &&
-    apt-get install -y --no-install-recommends
-    "nvidia-driver-libs:i386=$NVIDIA_VER"
-    "nvidia-vulkan-icd:i386=$NVIDIA_VER"
-
-  - apt-get install -y --no-install-recommends /sources/install-steam/steam.deb
-
-  - test -e /lib/i386-linux-gnu/libc.so.6
-
-  - >-
-    dpkg-query -W -f='${binary:Package} ${Version}\n'
-    libc6:i386
-    steam-libs-i386:i386
-    nvidia-driver-libs:i386
-    nvidia-vulkan-icd:i386
-
-  - dpkg --print-foreign-architectures
+  - |-
+    dpkg --add-architecture i386
+  - |-
+    test -s /etc/apt/sources.list.d/vanilla-base.sources
+  - |-
+    sed -i '/^Architectures:/d; /^Types:/a Architectures: amd64' /etc/apt/sources.list.d/vanilla-base.sources
+  - |-
+    test -s /usr/share/keyrings/debian-archive-keyring.gpg || (apt-get update && apt-get install -y --no-install-recommends debian-archive-keyring)
+  - |-
+    printf '%s\n' 'Types: deb' 'URIs: https://deb.debian.org/debian/' 'Suites: sid' 'Components: main contrib non-free non-free-firmware' 'Architectures: i386' 'Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg' > /etc/apt/sources.list.d/debian-i386.sources
+  - |-
+    apt-get update
+  - |-
+    apt-cache policy libc6:amd64 libc6:i386 nvidia-driver-libs:amd64 nvidia-driver-libs:i386 nvidia-vulkan-icd:amd64 nvidia-vulkan-icd:i386
+  - |-
+    apt-get install -y --no-install-recommends steam-libs-i386:i386
+  - |-
+    NVIDIA_VER="$(dpkg-query -W -f='${Version}' nvidia-driver-libs:amd64)" && test -n "$NVIDIA_VER" && apt-get install -y --no-install-recommends "nvidia-driver-libs:i386=$NVIDIA_VER" "nvidia-vulkan-icd:i386=$NVIDIA_VER"
+  - |-
+    apt-get install -y --no-install-recommends /sources/install-steam/steam.deb
+  - |-
+    test -e /lib/i386-linux-gnu/libc.so.6
+  - |-
+    dpkg-query -W -f='${binary:Package} ${Version}\n' libc6:i386 steam-libs-i386:i386 nvidia-driver-libs:i386 nvidia-vulkan-icd:i386
+  - |-
+    dpkg --print-foreign-architectures
