@@ -6,32 +6,43 @@ sources:
     url: https://cdn.fastly.steamstatic.com/client/installer/steam.deb
 
 commands:
-  # Confirm this is an amd64 system.
+  # Verify the host architecture.
   - test "$(dpkg --print-architecture)" = "amd64"
 
   # Enable 32-bit package support.
   - dpkg --add-architecture i386
 
-  # Keep Vanilla OS packages restricted to amd64.
+  # Keep Vanilla OS repositories restricted to amd64.
   - >-
     test -s /etc/apt/sources.list.d/vanilla-base.sources &&
     sed -i '/^Architectures:/d; /^Types:/a Architectures: amd64'
     /etc/apt/sources.list.d/vanilla-base.sources
 
-  # Remove the previous live Debian i386 source.
+  # Remove previous i386 repository configurations.
   - rm -f /etc/apt/sources.list.d/debian-i386.sources
+  - rm -f /etc/apt/sources.list.d/vanilla-i386.sources
 
-  # Create an i386 source using the same Vanilla OS snapshot.
+  # Use Debian Forky exclusively for i386 packages.
   - >-
-    sed 's/^Architectures: amd64$/Architectures: i386/'
-    /etc/apt/sources.list.d/vanilla-base.sources
-    > /etc/apt/sources.list.d/vanilla-i386.sources
+    printf '%s\n'
+    'Types: deb'
+    'URIs: https://deb.debian.org/debian/'
+    'Suites: forky'
+    'Components: main contrib non-free non-free-firmware'
+    'Architectures: i386'
+    'Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg'
+    > /etc/apt/sources.list.d/steam-i386.sources
 
   # Refresh package metadata.
   - apt-get update
 
-  # Verify matching amd64 and i386 package versions.
+  # Verify matching amd64 and i386 libgcc versions.
   - apt-cache policy libgcc-s1:amd64 libgcc-s1:i386
+
+  # Stop if the versions do not match.
+  - >-
+    test "$(apt-cache policy libgcc-s1:amd64 | awk '/Candidate:/ {print $2}')"
+    = "$(apt-cache policy libgcc-s1:i386 | awk '/Candidate:/ {print $2}')"
 
   # Install Steam's 32-bit compatibility libraries.
   - apt-get install -y --no-install-recommends steam-libs-i386:i386
