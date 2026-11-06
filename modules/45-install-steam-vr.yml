@@ -1,4 +1,3 @@
----
 name: install-steam
 type: shell
 
@@ -7,47 +6,35 @@ sources:
     url: https://cdn.fastly.steamstatic.com/client/installer/steam.deb
 
 commands:
-  - >-
-    dpkg --add-architecture i386
+  # Confirm this is an amd64 system.
+  - test "$(dpkg --print-architecture)" = "amd64"
 
-  - >-
-    test -s /etc/apt/sources.list.d/vanilla-base.sources
+  # Enable 32-bit package support.
+  - dpkg --add-architecture i386
 
+  # Keep Vanilla OS packages restricted to amd64.
   - >-
-    sed -i '/^Architectures:/d; /^Types:/a Architectures: amd64' /etc/apt/sources.list.d/vanilla-base.sources
+    test -s /etc/apt/sources.list.d/vanilla-base.sources &&
+    sed -i '/^Architectures:/d; /^Types:/a Architectures: amd64'
+    /etc/apt/sources.list.d/vanilla-base.sources
 
-  - >-
-    (if ! test -s /usr/share/keyrings/debian-archive-keyring.gpg; then apt-get update && apt-get install -y --no-install-recommends debian-archive-keyring; fi)
+  # Remove the previous live Debian i386 source.
+  - rm -f /etc/apt/sources.list.d/debian-i386.sources
 
+  # Create an i386 source using the same Vanilla OS snapshot.
   - >-
-    printf '%s\n' 'Types: deb' 'URIs: https://deb.debian.org/debian/' 'Suites: sid' 'Components: main contrib non-free non-free-firmware' 'Architectures: i386' 'Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg' > /etc/apt/sources.list.d/debian-i386.sources
+    sed 's/^Architectures: amd64$/Architectures: i386/'
+    /etc/apt/sources.list.d/vanilla-base.sources
+    > /etc/apt/sources.list.d/vanilla-i386.sources
 
-  - >-
-    apt-get update
+  # Refresh package metadata.
+  - apt-get update
 
-  - >-
-    apt-cache policy libc6:amd64 libc6:i386 nvidia-driver-libs:amd64 nvidia-driver-libs:i386 nvidia-vulkan-icd:amd64 nvidia-vulkan-icd:i386
+  # Verify matching amd64 and i386 package versions.
+  - apt-cache policy libgcc-s1:amd64 libgcc-s1:i386
 
-  - >-
-    apt-cache madison nvidia-driver-libs:i386 nvidia-vulkan-icd:i386
+  # Install Steam's 32-bit compatibility libraries.
+  - apt-get install -y --no-install-recommends steam-libs-i386:i386
 
-  - >-
-    apt-get install -y --no-install-recommends steam-libs-i386:i386
-
-  - >-
-    NVIDIA_VER="$(dpkg-query -W -f='${Version}' nvidia-driver-libs:amd64)" && test -n "$NVIDIA_VER" && apt-get install -y --no-install-recommends "nvidia-driver-libs:i386=$NVIDIA_VER" "nvidia-vulkan-icd:i386=$NVIDIA_VER"
-
-  - >-
-    test -s /sources/install-steam/steam/install-steam.deb
-
-  - >-
-    apt-get install -y --no-install-recommends /sources/install-steam/steam/install-steam.deb
-
-  - >-
-    test -e /lib/i386-linux-gnu/libc.so.6
-
-  - >-
-    dpkg-query -W -f='${binary:Package} ${Version}\n' libc6:i386 steam-libs-i386:i386 nvidia-driver-libs:i386 nvidia-vulkan-icd:i386
-
-  - >-
-    dpkg --print-foreign-architectures
+  # Install the Steam launcher.
+  - apt-get install -y /sources/install-steam/steam.deb
