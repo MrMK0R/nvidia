@@ -1,4 +1,3 @@
-
 name: nvidia-official-driver
 type: shell
 
@@ -28,19 +27,4 @@ modules:
             only-arches: [arm64]
         commands:
           - dpkg -i /sources/nvidia-official-repo/cuda-keyring_1.1-1_all/nvidia-official-repo.deb
-          - |
-            for attempt in 1 2 3 4 5; do
-              if apt-get update; then
-                echo "APT update successful."
-                break
-              fi
-
-              if [ "$attempt" -eq 5 ]; then
-                echo "ERROR: APT update failed after 5 attempts."
-                exit 1
-              fi
-
-              echo "NVIDIA repository synchronization failure. Retrying..."
-              rm -f /var/lib/apt/lists/*developer.download.nvidia.com*
-              sleep $((attempt * 15))
-            done
+          - 'for attempt in 1 2 3 4 5; do if apt-get update; then echo "APT update successful."; break; fi; if [ "$attempt" -eq 5 ]; then echo "ERROR: APT update failed after 5 attempts."; exit 1; fi; echo "NVIDIA repository synchronization failure. Retrying..."; rm -f /var/lib/apt/lists/*developer.download.nvidia.com*; sleep "$((attempt * 15))"; done'
