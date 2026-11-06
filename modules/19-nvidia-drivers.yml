@@ -3,26 +3,21 @@ type: shell
 
 sources:
   - type: file
-    url: https://developer.download.nvidia.com/compute/cuda/repos/debian12/x86_64/cuda-keyring_1.1-1_all.deb
+    url: https://developer.download.nvidia.com/compute/cuda/repos/debian13/x86_64/cuda-keyring_1.1-1_all.deb
 
 commands:
+  # Verify the downloaded NVIDIA keyring.
   - >-
     test -s /sources/nvidia-official-repo/cuda-keyring_1.1-1_all.deb
 
+  # Install NVIDIA's official repository configuration and signing key.
   - >-
     dpkg -i /sources/nvidia-official-repo/cuda-keyring_1.1-1_all.deb
 
+  # Ensure the Debian 13 repository was configured.
   - >-
-    test -f /etc/apt/sources.list.d/cuda-debian12-x86_64.list
+    test -f /etc/apt/sources.list.d/cuda-debian13-x86_64.list
 
-  - >-
-    sed -i 's/signed-by=/signed-by=/; s/] / allow-insecure=yes] /' /etc/apt/sources.list.d/cuda-debian12-x86_64.list
-
-  - >-
-    printf '%s\n' 'APT::Key::GPGVCommand "/usr/bin/gpgv";' > /etc/apt/apt.conf.d/99-nvidia-gpgv
-
+  # Refresh APT metadata using normal signature verification.
   - >-
     apt-get update
-
-  - >-
-    rm -f /etc/apt/apt.conf.d/99-nvidia-gpgv
