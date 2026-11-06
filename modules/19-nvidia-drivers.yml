@@ -6,18 +6,33 @@ sources:
     url: https://developer.download.nvidia.com/compute/cuda/repos/debian13/x86_64/cuda-keyring_1.1-1_all.deb
 
 commands:
-  # Verify the downloaded NVIDIA keyring.
+  # Enable shell tracing so GitHub Actions identifies the failing command.
+  - set -eux
+
+  # Verify the downloaded package.
   - >-
     test -s /sources/nvidia-official-repo/cuda-keyring_1.1-1_all.deb
 
-  # Install NVIDIA's official repository configuration and signing key.
+  # Install NVIDIA's official repository keyring.
   - >-
     dpkg -i /sources/nvidia-official-repo/cuda-keyring_1.1-1_all.deb
 
-  # Ensure the Debian 13 repository was configured.
+  # Show exactly what the keyring package installed.
+  - >-
+    dpkg -L cuda-keyring
+
+  # Verify the repository configuration exists.
   - >-
     test -f /etc/apt/sources.list.d/cuda-debian13-x86_64.list
 
-  # Refresh APT metadata using normal signature verification.
+  # Print the repository configuration for diagnostics.
   - >-
-    apt-get update
+    cat /etc/apt/sources.list.d/cuda-debian13-x86_64.list
+
+  # Verify NVIDIA's signing key exists.
+  - >-
+    test -s /usr/share/keyrings/cuda-archive-keyring.gpg
+
+  # Refresh repository metadata and expose signature errors.
+  - >-
+    apt-get update -o Debug::Acquire::gpgv=true
