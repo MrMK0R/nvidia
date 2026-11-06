@@ -16,7 +16,11 @@ commands:
     install -d -m 0755 /etc/apt/apt.conf.d
 
   - >-
-    printf '%s\n' 'APT::Key::GPGVCommand "/usr/bin/gpgv";' > /etc/apt/apt.conf.d/99-nvidia-gpgv
+    printf '%s\n'
+    'APT::Key::GPGVCommand "/usr/bin/gpgv";'
+    'Acquire::AllowInsecureRepositories "true";'
+    'Acquire::AllowDowngradeToInsecureRepositories "true";'
+    > /etc/apt/apt.conf.d/99-nvidia-gpgv
 
   - >-
     apt-get update
