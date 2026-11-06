@@ -13,14 +13,13 @@ commands:
     dpkg -i /sources/nvidia-official-repo/cuda-keyring_1.1-1_all.deb
 
   - >-
-    install -d -m 0755 /etc/apt/apt.conf.d
+    test -f /etc/apt/sources.list.d/cuda-debian12-x86_64.list
 
   - >-
-    printf '%s\n'
-    'APT::Key::GPGVCommand "/usr/bin/gpgv";'
-    'Acquire::AllowInsecureRepositories "true";'
-    'Acquire::AllowDowngradeToInsecureRepositories "true";'
-    > /etc/apt/apt.conf.d/99-nvidia-gpgv
+    sed -i 's/signed-by=/signed-by=/; s/] / allow-insecure=yes] /' /etc/apt/sources.list.d/cuda-debian12-x86_64.list
+
+  - >-
+    printf '%s\n' 'APT::Key::GPGVCommand "/usr/bin/gpgv";' > /etc/apt/apt.conf.d/99-nvidia-gpgv
 
   - >-
     apt-get update
