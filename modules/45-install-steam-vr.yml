@@ -22,30 +22,31 @@ commands:
   - rm -f /etc/apt/sources.list.d/debian-i386.sources
   - rm -f /etc/apt/sources.list.d/vanilla-i386.sources
 
-  # Use a dated Debian Sid snapshot for i386.
-  - |
-    cat > /etc/apt/sources.list.d/steam-i386.sources <<'EOF'
-    Types: deb
-    URIs: https://snapshot.debian.org/archive/debian/20261023T000000Z/
-    Suites: sid
-    Components: main contrib non-free non-free-firmware
-    Architectures: i386
-    Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
-    Check-Valid-Until: no
-    EOF
+  # Configure the dated Debian Sid snapshot for i386.
+  # printf avoids Dockerfile heredoc parsing problems.
+  - >-
+    printf '%s\n'
+    'Types: deb'
+    'URIs: https://snapshot.debian.org/archive/debian/20261023T000000Z/'
+    'Suites: sid'
+    'Components: main contrib non-free non-free-firmware'
+    'Architectures: i386'
+    'Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg'
+    'Check-Valid-Until: no'
+    > /etc/apt/sources.list.d/steam-i386.sources
 
   # Refresh package metadata.
   - apt-get update
 
-  # Display and verify matching multiarch library versions.
+  # Display multiarch package versions.
   - apt-cache policy libgcc-s1:amd64 libgcc-s1:i386 libudev1:amd64 libudev1:i386
 
-  # Stop if libgcc versions do not match.
+  # Verify matching libgcc versions.
   - >-
     test "$(apt-cache policy libgcc-s1:amd64 | awk '/Candidate:/ {print $2}')"
     = "$(apt-cache policy libgcc-s1:i386 | awk '/Candidate:/ {print $2}')"
 
-  # Stop if libudev versions do not match.
+  # Verify matching libudev versions.
   - >-
     test "$(apt-cache policy libudev1:amd64 | awk '/Candidate:/ {print $2}')"
     = "$(apt-cache policy libudev1:i386 | awk '/Candidate:/ {print $2}')"
