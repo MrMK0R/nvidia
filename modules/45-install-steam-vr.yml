@@ -6,13 +6,12 @@ sources:
     url: https://cdn.fastly.steamstatic.com/client/installer/steam.deb
 
 commands:
-  # Verify the host architecture.
   - test "$(dpkg --print-architecture)" = "amd64"
 
   # Enable 32-bit package support.
   - dpkg --add-architecture i386
 
-  # Keep Vanilla OS repositories restricted to amd64.
+  # Keep Vanilla repositories restricted to amd64.
   - >-
     test -s /etc/apt/sources.list.d/vanilla-base.sources &&
     sed -i '/^Architectures:/d; /^Types:/a Architectures: amd64'
@@ -22,8 +21,7 @@ commands:
   - rm -f /etc/apt/sources.list.d/debian-i386.sources
   - rm -f /etc/apt/sources.list.d/vanilla-i386.sources
 
-  # Configure the dated Debian Sid snapshot for i386.
-  # printf avoids Dockerfile heredoc parsing problems.
+  # Configure Debian Sid snapshot for i386 packages.
   - >-
     printf '%s\n'
     'Types: deb'
@@ -38,15 +36,11 @@ commands:
   # Refresh package metadata.
   - apt-get update
 
-  # Display multiarch package versions.
-  - apt-cache policy libgcc-s1:amd64 libgcc-s1:i386 libudev1:amd64 libudev1:i386
-
-  # Verify matching libgcc versions.
+  # Verify compatible amd64/i386 library versions.
   - >-
     test "$(apt-cache policy libgcc-s1:amd64 | awk '/Candidate:/ {print $2}')"
     = "$(apt-cache policy libgcc-s1:i386 | awk '/Candidate:/ {print $2}')"
 
-  # Verify matching libudev versions.
   - >-
     test "$(apt-cache policy libudev1:amd64 | awk '/Candidate:/ {print $2}')"
     = "$(apt-cache policy libudev1:i386 | awk '/Candidate:/ {print $2}')"
@@ -54,5 +48,5 @@ commands:
   # Install Steam's 32-bit compatibility libraries.
   - apt-get install -y --no-install-recommends steam-libs-i386:i386
 
-  # Install the Steam launcher.
-  - apt-get install -y /sources/install-steam/steam.deb
+  # Install the downloaded Steam launcher.
+  - cd /sources/install-steam && apt-get install -y ./steam.deb
