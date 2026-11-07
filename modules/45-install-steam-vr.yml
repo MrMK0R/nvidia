@@ -6,6 +6,7 @@ sources:
     url: https://cdn.fastly.steamstatic.com/client/installer/steam.deb
 
 commands:
+  # Confirm this is an amd64 system.
   - test "$(dpkg --print-architecture)" = "amd64"
 
   # Enable 32-bit package support.
@@ -48,5 +49,11 @@ commands:
   # Install Steam's 32-bit compatibility libraries.
   - apt-get install -y --no-install-recommends steam-libs-i386:i386
 
-  # Install the downloaded Steam launcher.
-  - cd /sources/install-steam && apt-get install -y ./steam.deb
+  # Install the local Steam package using dpkg.
+  # If dependencies are missing, let APT resolve them and retry.
+  - >-
+    dpkg -i /sources/install-steam/steam.deb ||
+    {
+      apt-get install -y --no-install-recommends -f &&
+      dpkg -i /sources/install-steam/steam.deb;
+    }
