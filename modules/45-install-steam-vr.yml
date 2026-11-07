@@ -9,6 +9,9 @@ commands:
   # Confirm this is an amd64 system.
   - test "$(dpkg --print-architecture)" = "amd64"
 
+  # Confirm the downloaded Steam package exists at VIB's generated path.
+  - test -s /sources/install-steam/steam/install-steam.deb
+
   # Enable 32-bit package support.
   - dpkg --add-architecture i386
 
@@ -50,5 +53,4 @@ commands:
   - apt-get install -y --no-install-recommends steam-libs-i386:i386
 
   # Install Steam and recover missing dependencies.
-  # Keep this entire command on one physical line.
-  - dpkg -i /sources/install-steam/steam.deb || (apt-get install -y --no-install-recommends -f && dpkg -i /sources/install-steam/steam.deb)
+  - dpkg -i /sources/install-steam/steam/install-steam.deb || (apt-get install -y --no-install-recommends -f && dpkg -i /sources/install-steam/steam/install-steam.deb)
