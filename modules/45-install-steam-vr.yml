@@ -22,27 +22,33 @@ commands:
   - rm -f /etc/apt/sources.list.d/debian-i386.sources
   - rm -f /etc/apt/sources.list.d/vanilla-i386.sources
 
-  # Use Debian Forky exclusively for i386 packages.
-  - >-
-    printf '%s\n'
-    'Types: deb'
-    'URIs: https://deb.debian.org/debian/'
-    'Suites: forky'
-    'Components: main contrib non-free non-free-firmware'
-    'Architectures: i386'
-    'Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg'
-    > /etc/apt/sources.list.d/steam-i386.sources
+  # Use a dated Debian Sid snapshot for i386.
+  - |
+    cat > /etc/apt/sources.list.d/steam-i386.sources <<'EOF'
+    Types: deb
+    URIs: https://snapshot.debian.org/archive/debian/20261023T000000Z/
+    Suites: sid
+    Components: main contrib non-free non-free-firmware
+    Architectures: i386
+    Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+    Check-Valid-Until: no
+    EOF
 
   # Refresh package metadata.
   - apt-get update
 
-  # Verify matching amd64 and i386 libgcc versions.
-  - apt-cache policy libgcc-s1:amd64 libgcc-s1:i386
+  # Display and verify matching multiarch library versions.
+  - apt-cache policy libgcc-s1:amd64 libgcc-s1:i386 libudev1:amd64 libudev1:i386
 
-  # Stop if the versions do not match.
+  # Stop if libgcc versions do not match.
   - >-
     test "$(apt-cache policy libgcc-s1:amd64 | awk '/Candidate:/ {print $2}')"
     = "$(apt-cache policy libgcc-s1:i386 | awk '/Candidate:/ {print $2}')"
+
+  # Stop if libudev versions do not match.
+  - >-
+    test "$(apt-cache policy libudev1:amd64 | awk '/Candidate:/ {print $2}')"
+    = "$(apt-cache policy libudev1:i386 | awk '/Candidate:/ {print $2}')"
 
   # Install Steam's 32-bit compatibility libraries.
   - apt-get install -y --no-install-recommends steam-libs-i386:i386
