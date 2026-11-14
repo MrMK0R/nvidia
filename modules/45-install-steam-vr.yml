@@ -6,26 +6,23 @@ sources:
     url: https://cdn.fastly.steamstatic.com/client/installer/steam.deb
 
 commands:
-  # Confirm this is an amd64 system.
   - test "$(dpkg --print-architecture)" = "amd64"
-
-  # Confirm the downloaded Steam package exists.
   - test -s /sources/install-steam/steam/install-steam.deb
 
-  # Enable 32-bit package support.
+  # Enable 32-bit architecture.
   - dpkg --add-architecture i386
 
-  # Keep Vanilla repositories restricted to amd64.
+  # Keep Vanilla repositories amd64-only.
   - >-
     test -s /etc/apt/sources.list.d/vanilla-base.sources &&
     sed -i '/^Architectures:/d; /^Types:/a Architectures: amd64'
     /etc/apt/sources.list.d/vanilla-base.sources
 
-  # Remove previous i386 repository configurations.
+  # Remove stale repository definitions.
   - rm -f /etc/apt/sources.list.d/debian-i386.sources
   - rm -f /etc/apt/sources.list.d/vanilla-i386.sources
 
-  # Configure Debian snapshot for amd64 and i386 packages.
+  # Debian snapshot for Steam and i386 dependencies.
   - >-
     printf '%s\n'
     'Types: deb'
@@ -35,12 +32,11 @@ commands:
     'Architectures: amd64 i386'
     'Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg'
     'Check-Valid-Until: no'
-    > /etc/apt/sources.list.d/steam-i386.sources
+    > /etc/apt/sources.list.d/steam-debian.sources
 
-  # Refresh package metadata.
   - apt-get update
 
-  # Verify compatible amd64/i386 library versions.
+  # Match amd64/i386 runtime library versions.
   - >-
     test "$(apt-cache policy libgcc-s1:amd64 | awk '/Candidate:/ {print $2}')"
     = "$(apt-cache policy libgcc-s1:i386 | awk '/Candidate:/ {print $2}')"
@@ -49,14 +45,16 @@ commands:
     test "$(apt-cache policy libudev1:amd64 | awk '/Candidate:/ {print $2}')"
     = "$(apt-cache policy libudev1:i386 | awk '/Candidate:/ {print $2}')"
 
-  # Install Steam's 32-bit compatibility libraries.
+  # Install Steam compatibility libraries.
   - apt-get install -y --no-install-recommends steam-libs-i386:i386
 
-  # Install the amd64 terminal emulator required by Steam.
-  - apt-get install -y --no-install-recommends xterm
-
-  # Install Steam and recover missing dependencies if necessary.
+  # Install Steam with APT dependency resolution.
   - >-
-    dpkg -i /sources/install-steam/steam/install-steam.deb ||
-    (apt-get install -y --no-install-recommends -f &&
-    dpkg -i /sources/install-steam/steam/install-steam.deb)
+    apt-get install -y --no-install-recommends
+    /sources/install-steam/steam/install-steam.deb
+
+  # Verify installation.
+  - test "$(dpkg-query -W -f='${db:Status-Status}' steam-launcher)" = "installed"
+
+  # Remove temporary Debian source.
+  - rm -f /etc/apt/sources.list.d/steam-debian.sources
