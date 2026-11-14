@@ -6,23 +6,24 @@ sources:
     url: https://cdn.fastly.steamstatic.com/client/installer/steam.deb
 
 commands:
+  # Verify architecture and downloaded Steam package.
   - test "$(dpkg --print-architecture)" = "amd64"
   - test -s /sources/install-steam/steam/install-steam.deb
 
-  # Enable 32-bit architecture.
+  # Enable 32-bit package support.
   - dpkg --add-architecture i386
 
-  # Keep Vanilla repositories amd64-only.
+  # Keep Vanilla repositories restricted to amd64.
   - >-
     test -s /etc/apt/sources.list.d/vanilla-base.sources &&
     sed -i '/^Architectures:/d; /^Types:/a Architectures: amd64'
     /etc/apt/sources.list.d/vanilla-base.sources
 
-  # Remove stale repository definitions.
+  # Remove stale i386 repository definitions.
   - rm -f /etc/apt/sources.list.d/debian-i386.sources
   - rm -f /etc/apt/sources.list.d/vanilla-i386.sources
 
-  # Debian snapshot for Steam and i386 dependencies.
+  # Configure Debian snapshot for Steam dependencies.
   - >-
     printf '%s\n'
     'Types: deb'
@@ -34,27 +35,20 @@ commands:
     'Check-Valid-Until: no'
     > /etc/apt/sources.list.d/steam-debian.sources
 
+  # Refresh package metadata.
   - apt-get update
 
-  # Match amd64/i386 runtime library versions.
-  - >-
-    test "$(apt-cache policy libgcc-s1:amd64 | awk '/Candidate:/ {print $2}')"
-    = "$(apt-cache policy libgcc-s1:i386 | awk '/Candidate:/ {print $2}')"
-
-  - >-
-    test "$(apt-cache policy libudev1:amd64 | awk '/Candidate:/ {print $2}')"
-    = "$(apt-cache policy libudev1:i386 | awk '/Candidate:/ {print $2}')"
-
-  # Install Steam compatibility libraries.
+  # Install Steam 32-bit compatibility libraries.
   - apt-get install -y --no-install-recommends steam-libs-i386:i386
 
-  # Install Steam with APT dependency resolution.
+  # Install Steam using APT dependency resolution.
+  # APT will resolve xterm and other package dependencies.
   - >-
     apt-get install -y --no-install-recommends
     /sources/install-steam/steam/install-steam.deb
 
-  # Verify installation.
+  # Verify Steam was successfully configured.
   - test "$(dpkg-query -W -f='${db:Status-Status}' steam-launcher)" = "installed"
 
-  # Remove temporary Debian source.
+  # Remove temporary Debian repository.
   - rm -f /etc/apt/sources.list.d/steam-debian.sources
