@@ -6,81 +6,68 @@ sources:
     url: https://cdn.fastly.steamstatic.com/client/installer/steam.deb
 
 commands:
-  # Verify build architecture and Steam package.
+  # Verify architecture and package.
   - test "$(dpkg --print-architecture)" = "amd64"
   - test -s /sources/install-steam/steam/install-steam.deb
 
-  # Enable Steam's 32-bit architecture.
+  # Enable 32-bit architecture.
   - dpkg --add-architecture i386
 
-  # Restrict Vanilla OS repositories to amd64.
+  # Keep Vanilla OS repositories amd64-only.
   - >-
     test -f /etc/apt/sources.list.d/vanilla-base.sources &&
     sed -i '/^Architectures:/d; /^Types:/a Architectures: amd64'
     /etc/apt/sources.list.d/vanilla-base.sources
 
-  # Remove conflicting i386 repository definitions.
+  # Remove old i386 repository definitions.
   - rm -f /etc/apt/sources.list.d/debian-i386.sources
   - rm -f /etc/apt/sources.list.d/vanilla-i386.sources
 
-  # Debian snapshot repository.
+  # Use Debian snapshot with matching GCC runtime packages.
   - >-
     printf '%s\n'
     'Types: deb'
-    'URIs: https://snapshot.debian.org/archive/debian/20261023T000000Z/'
+    'URIs: https://snapshot.debian.org/archive/debian/20261114T000000Z/'
     'Suites: sid'
     'Components: main contrib non-free non-free-firmware'
-    'Architectures: amd64 i386'
+    'Architectures: i386'
     'Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg'
     'Check-Valid-Until: no'
     > /etc/apt/sources.list.d/steam-debian.sources
 
-  # Force matching libgcc versions for both architectures.
-  - >-
-    printf '%s\n'
-    'Package: libgcc-s1'
-    'Pin: version 16.2.0-3'
-    'Pin-Priority: 1001'
-    > /etc/apt/preferences.d/steam-libgcc
-
   # Refresh repositories.
   - apt-get update
 
-  # Install matching libgcc packages.
+  # Install the matching 32-bit GCC runtime.
   - >-
-    apt-get install -y --allow-downgrades
-    libgcc-s1:amd64=16.2.0-3
-    libgcc-s1:i386=16.2.0-3
+    apt-get install -y --no-install-recommends
+    gcc-16-base:i386=16.2.0-4
+    libgcc-s1:i386=16.2.0-4
 
-  # Verify amd64 and i386 are synchronized.
+  # Verify runtime versions match the host.
   - >-
     test "$(dpkg-query -W -f='${Version}' libgcc-s1:amd64)"
-    = "16.2.0-3"
-
-  - >-
-    test "$(dpkg-query -W -f='${Version}' libgcc-s1:i386)"
-    = "16.2.0-3"
+    = "$(dpkg-query -W -f='${Version}' libgcc-s1:i386)"
 
   # Install Steam 32-bit dependencies.
   - >-
     apt-get install -y --no-install-recommends
     steam-libs-i386:i386
 
-  # Install Steam launcher.
+  # Install Steam.
   - >-
     apt-get install -y --no-install-recommends
     /sources/install-steam/steam/install-steam.deb
 
-  # Verify Steam is installed.
+  # Verify installation.
   - >-
     test "$(dpkg-query -W -f='${db:Status-Status}'
     steam-launcher)" = "installed"
 
-  # Verify both libgcc architectures remain synchronized.
+  # Verify architecture synchronization.
   - >-
     test "$(dpkg-query -W -f='${Version}' libgcc-s1:amd64)"
     = "$(dpkg-query -W -f='${Version}' libgcc-s1:i386)"
 
-  # Remove temporary Steam repository and pin.
+  # Clean temporary repository.
   - rm -f /etc/apt/sources.list.d/steam-debian.sources
-  - rm -f /etc/apt/preferences.d/steam-libgcc
