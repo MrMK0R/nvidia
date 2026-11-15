@@ -6,14 +6,14 @@ sources:
     url: https://cdn.fastly.steamstatic.com/client/installer/steam.deb
 
 commands:
-  # Verify architecture and downloaded Steam package.
+  # Verify architecture and downloaded package.
   - test "$(dpkg --print-architecture)" = "amd64"
   - test -s /sources/install-steam/steam/install-steam.deb
 
   # Enable 32-bit package support.
   - dpkg --add-architecture i386
 
-  # Keep Vanilla repositories restricted to amd64.
+  # Keep Vanilla repositories amd64-only.
   - >-
     test -s /etc/apt/sources.list.d/vanilla-base.sources &&
     sed -i '/^Architectures:/d; /^Types:/a Architectures: amd64'
@@ -38,16 +38,21 @@ commands:
   # Refresh package metadata.
   - apt-get update
 
+  # Synchronize libgcc versions across architectures.
+  - >-
+    apt-get install -y --allow-downgrades
+    libgcc-s1:amd64=16.2.0-3
+    libgcc-s1:i386=16.2.0-3
+
   # Install Steam 32-bit compatibility libraries.
   - apt-get install -y --no-install-recommends steam-libs-i386:i386
 
-  # Install Steam using APT dependency resolution.
-  # APT will resolve xterm and other package dependencies.
+  # Install Steam with dependency resolution.
   - >-
     apt-get install -y --no-install-recommends
     /sources/install-steam/steam/install-steam.deb
 
-  # Verify Steam was successfully configured.
+  # Verify Steam installation.
   - test "$(dpkg-query -W -f='${db:Status-Status}' steam-launcher)" = "installed"
 
   # Remove temporary Debian repository.
