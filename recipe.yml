@@ -123,6 +123,7 @@ stages:
           - libnccl-dev
           - libfuse2t64
           - sysprof
+          - wl-clipboard
 
   - name: cleanup-and-sysconf-setup
     type: shell
